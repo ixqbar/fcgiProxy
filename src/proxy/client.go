@@ -10,9 +10,17 @@ import (
 )
 
 type Client struct {
+	sync.Mutex
 	Uuid string
-	Conn *websocket.Conn
-	JoinTime int64
+	conn *websocket.Conn
+	joinTime int64
+}
+
+func (obj *Client) PushMessage(message []byte) error {
+	obj.Lock()
+	defer obj.Unlock()
+
+	return obj.conn.WriteMessage(websocket.TextMessage, message)
 }
 
 type RequestClients struct {
@@ -26,8 +34,8 @@ var Clients = NewRequestClients()
 func NewClient(uuid string, conn *websocket.Conn) *Client {
 	return &Client{
 		Uuid:uuid,
-		Conn:conn,
-		JoinTime:time.Now().Unix(),
+		conn:conn,
+		joinTime:time.Now().Unix(),
 	}
 }
 
@@ -37,12 +45,14 @@ func NewRequestClients() *RequestClients {
 	}
 }
 
-func (obj *RequestClients) AddNewClient(uuid string, conn *websocket.Conn)  {
+func (obj *RequestClients) AddNewClient(uuid string, conn *websocket.Conn) *Client {
 	obj.Lock()
 	defer obj.Unlock()
 
 	atomic.AddInt64(&obj.Num, 1)
 	obj.Clients[uuid] = NewClient(uuid, conn)
+
+	return obj.Clients[uuid]
 }
 
 func (obj *RequestClients) RemoveClient(uuid string)  {
@@ -61,7 +71,7 @@ func (obj *RequestClients) PushMessage(uuid string, message []byte) error {
 		return errors.New(fmt.Sprintf("not found client %s", uuid))
 	}
 
-	return obj.Clients[uuid].Conn.WriteMessage(websocket.TextMessage, message)
+	return obj.Clients[uuid].PushMessage(message)
 }
 
 func (obj *RequestClients) BroadcastMessage(message []byte) error  {
@@ -69,7 +79,7 @@ func (obj *RequestClients) BroadcastMessage(message []byte) error  {
 	defer obj.Unlock()
 
 	for _, val := range obj.Clients {
-		err := val.Conn.WriteMessage(websocket.TextMessage, message)
+		err := val.PushMessage(message)
 		if err != nil {
 			Logger.Printf("broadcast message to %s failed %s", val.Uuid, err)
 		}

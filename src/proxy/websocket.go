@@ -35,7 +35,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	uuid := uuid.New().String()
-	Clients.AddNewClient(uuid, conn)
+	client := Clients.AddNewClient(uuid, conn)
 
 	Logger.Printf("client %s[%s] connected", conn.RemoteAddr(), uuid)
 
@@ -89,7 +89,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = conn.WriteMessage(messageType, content)
+		err = client.PushMessage(content)
 		if err != nil {
 			Logger.Printf("response failed %s", err)
 			return
