@@ -71,7 +71,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 		Logger.Printf("request :%s  len=%d", string(p), body.Len())
 
-		fcgi, err := fcgiclient.Dial("tcp", Config.PhpServerAddress)
+		fcgi, err := fcgiclient.Dial("tcp", Config.FcgiServerAddress)
 		if err != nil {
 			Logger.Print(err)
 			return
@@ -79,13 +79,15 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := fcgi.Post(env, "application/octet-stream", body, body.Len())
 		if err != nil {
-			Logger.Printf("read php response failed %s", err)
+			Logger.Printf("read fcgi response failed %s", err)
+			fcgi.Close()
 			return
 		}
+		fcgi.Close()
 
 		content, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			Logger.Printf("read php response failed %s", err)
+			Logger.Printf("read fcgi response failed %s", err)
 			return
 		}
 
@@ -94,8 +96,6 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 			Logger.Printf("response failed %s", err)
 			return
 		}
-
-		fcgi.Close()
 	}
 
 	Clients.RemoveClient(uuid)

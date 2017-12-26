@@ -15,7 +15,7 @@ type ProxyParams struct {
 type ProxyConfig struct {
 	AdminServerAddress string `xml:"admin_server"`
 	HttpServerAddress string `xml:"http_server"`
-	PhpServerAddress string `xml:"php_server"`
+	FcgiServerAddress string `xml:"fcgi_server"`
 	ScriptFileName string `xml:"script_filename"`
 	QueryString string `xml:"query_string"`
 	HeaderParams []ProxyParams `xml:"header_params>param"`

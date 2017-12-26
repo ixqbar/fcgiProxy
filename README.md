@@ -19,7 +19,7 @@ fcgiProxy --config=config.xml
 <config>
 	<admin_server>0.0.0.0:6899</admin_server>
 	<http_server>0.0.0.0:8899</http_server>
-	<php_server>0.0.0.0:9000</php_server>
+	<fcgi_server>0.0.0.0:9000</fcgi_server>
 	<script_filename>/Users/xingqiba/workspace/php/zwj2-beta/zwj2/app/src/game_server/test/proxy.php</script_filename>
 	<query_string><![CDATA[name=xingqiba&version=0.0.1]]></query_string>
 	<header_params>
