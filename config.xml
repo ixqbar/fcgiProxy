@@ -7,8 +7,8 @@
 	<query_string><![CDATA[name=xingqiba&version=0.0.1]]></query_string>
 	<header_params>
 		<param>
-			<key>PHP-Proxy</key>
-			<value>1</value>
+			<key>ProxyVersion</key>
+			<value>0.0.1</value>
 		</param>
 	</header_params>
 </config>
