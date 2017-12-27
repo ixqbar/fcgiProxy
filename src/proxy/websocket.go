@@ -83,9 +83,10 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 			fcgi.Close()
 			return
 		}
-		fcgi.Close()
 
 		content, err := ioutil.ReadAll(resp.Body)
+		fcgi.Close()
+
 		if err != nil {
 			Logger.Printf("read fcgi response failed %s", err)
 			return
