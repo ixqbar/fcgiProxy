@@ -91,6 +91,6 @@ func Run() {
 		Logger.Print(err)
 	}
 
-	time.Sleep(time.Duration(10))
+	time.Sleep(time.Duration(10) * time.Second)
 }
 

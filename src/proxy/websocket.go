@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"net/url"
 )
 
 var upgrader = websocket.Upgrader{
@@ -34,10 +35,22 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 	defer conn.Close()
 
-	uuid := uuid.New().String()
-	client := Clients.AddNewClient(uuid, conn)
+	rv, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		Logger.Print(err)
+		return
+	}
 
-	Logger.Printf("client %s[%s] connected", conn.RemoteAddr(), uuid)
+	Logger.Printf("%+v", rv)
+
+	clientUUID := rv.Get("uuid")
+	if len(clientUUID) == 0 {
+		clientUUID = uuid.New().String()
+	}
+
+	client := Clients.AddNewClient(clientUUID, conn)
+
+	Logger.Printf("client %s[%s] connected with query[%s]", conn.RemoteAddr(), clientUUID, r.URL.RawQuery)
 
 	env := make(map[string]string)
 	env["SCRIPT_FILENAME"] = Config.ScriptFileName
@@ -51,7 +64,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 	env["REMOTE_ADDR"] = remoteInfo[0]
 	env["REMOTE_PORT"] = remoteInfo[1]
 
-	env["PROXY_UUID"] = uuid
+	env["PROXY_UUID"] = clientUUID
 
 	body := bytes.NewReader(nil)
 
@@ -99,9 +112,9 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	Clients.RemoveClient(uuid)
+	Clients.RemoveClient(clientUUID)
 
-	Logger.Print("client %s[%s] disconnected", conn.RemoteAddr(), uuid)
+	Logger.Print("client %s[%s] disconnected", conn.RemoteAddr(), clientUUID)
 }
 
 func WebSocket(ctx context.Context) *http.Server {
