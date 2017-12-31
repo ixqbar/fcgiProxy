@@ -1,5 +1,5 @@
 
-### version 0.0.2
+### version 0.0.3
 
 ### description
 ```
@@ -35,7 +35,7 @@ fcgiProxy --config=config.xml
 ```
 set {uuid} message   #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取
 set * message        #给所有客户端推送消息
-number 				 #获取在线人数
+number               #获取在线人数
 ```
 
 更多疑问请+qq群 233415606
