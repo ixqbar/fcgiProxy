@@ -28,7 +28,10 @@ func (obj *Client) Close() {
 	obj.Lock()
 	defer obj.Unlock()
 
-	obj.conn.SetReadDeadline(time.Now())
+	err := obj.conn.SetReadDeadline(time.Now())
+	if err != nil {
+		Logger.Printf("client %s[%s] SetReadDeadline failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
+	}
 	obj.alive = false
 	<- obj.over
 }
