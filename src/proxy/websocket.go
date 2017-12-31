@@ -60,10 +60,18 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 		Logger.Printf("client %s[%s] disconnected", conn.RemoteAddr(), clientUUID)
 	}()
 
+	qstr := r.URL.RawQuery
+	if len(qstr) == 0 {
+		qstr = Config.QueryString
+	} else {
+		qstr = fmt.Sprintf("%s&%s", qstr, Config.QueryString)
+	}
+
+	Logger.Printf("client %s[%s] final query[%s]", conn.RemoteAddr(), clientUUID, qstr)
 
 	env := make(map[string]string)
 	env["SCRIPT_FILENAME"] = Config.ScriptFileName
-	env["QUERY_STRING"] = Config.QueryString
+	env["QUERY_STRING"] = qstr
 
 	for _, item := range Config.HeaderParams {
 		env[item.Key] = item.Value
@@ -80,7 +88,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			Logger.Printf("client %s[%s] read err message failed %s", conn.RemoteAddr(),clientUUID, err)
+			Logger.Printf("client %s[%s] read err message failed %s", conn.RemoteAddr(), clientUUID, err)
 			break
 		}
 

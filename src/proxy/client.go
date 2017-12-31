@@ -33,9 +33,9 @@ func (obj *Client) Close() {
 	<- obj.over
 }
 
-func (obj *Client) remove() {
+func (obj *Client) Remove() {
 	if obj.alive {
-		obj.Close()
+		go obj.Close()
 	}
 
 	obj.over <- true
@@ -80,7 +80,7 @@ func (obj *RequestClients) RemoveClient(uuid string)  {
 	obj.Lock()
 	defer obj.Unlock()
 
-	obj.Clients[uuid].remove()
+	obj.Clients[uuid].Remove()
 	obj.num--
 	delete(obj.Clients, uuid)
 }
