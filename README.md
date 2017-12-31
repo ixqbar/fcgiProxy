@@ -31,7 +31,7 @@ fcgiProxy --config=config.xml
 </config>
 ```
 
-### php通过redis协议推送消息给客户端
+### fcgi通过redis协议推送消息给客户端
 ```
 set {uuid} message   #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
 set * message        #给所有客户端推送消息
