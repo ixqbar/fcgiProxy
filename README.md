@@ -33,9 +33,11 @@ fcgiProxy --config=config.xml
 
 ### php通过redis协议推送消息给客户端
 ```
-set {uuid} message   #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取
+set {uuid} message   #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
 set * message        #给所有客户端推送消息
 number               #获取在线人数
+del *                #剔除所有在线客户端
+del {uuid}           #剔除指定在线客户端， uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
 ```
 
 更多疑问请+qq群 233415606

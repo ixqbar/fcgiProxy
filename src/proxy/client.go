@@ -34,9 +34,11 @@ func (obj *Client) Close() {
 }
 
 func (obj *Client) remove() {
-	if obj.alive == false {
-		obj.over <- true
+	if obj.alive {
+		obj.Close()
 	}
+
+	obj.over <- true
 }
 
 
@@ -124,4 +126,11 @@ func (obj *RequestClients) GetClient(uuid string) (*Client) {
 	}
 
 	return obj.Clients[uuid]
+}
+
+func (obj *RequestClients) RemoveAll() {
+	for key, val := range obj.Clients {
+		val.Close()
+		delete(obj.Clients, key)
+	}
 }

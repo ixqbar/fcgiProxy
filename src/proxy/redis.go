@@ -37,11 +37,24 @@ func (obj *proxyRedisHandle) Number() (int, error) {
 	return Clients.Number(), nil
 }
 
-func (obj *proxyRedisHandle) Set(uuid string, message []byte) (error) {
-	if uuid == "*" {
+func (obj *proxyRedisHandle) Del(clientUUID string) (error) {
+	if clientUUID == "*" {
+		Clients.RemoveAll()
+	} else {
+		client := Clients.GetClient(clientUUID)
+		if client != nil {
+			client.Close()
+		}
+	}
+
+	return nil
+}
+
+func (obj *proxyRedisHandle) Set(clientUUID string, message []byte) (error) {
+	if clientUUID == "*" {
 		Clients.BroadcastMessage(message)
 	} else {
-		Clients.PushMessage(uuid, message)
+		Clients.PushMessage(clientUUID, message)
 	}
 	return nil
 }
