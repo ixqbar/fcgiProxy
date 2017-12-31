@@ -11,7 +11,7 @@
 fcgiProxy --config=config.xml
 ```
 * redisproxy 0.0.0.0:6899
-* websokcet  ws://127.0.0.1:8899/proxy
+* websokcet  ws://127.0.0.1:8899/proxy[?uuid=指定连接客户端标记，可选]
 
 ### config
 ```
@@ -35,6 +35,7 @@ fcgiProxy --config=config.xml
 ```
 set {uuid} message   #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取
 set * message        #给所有客户端推送消息
+number 				 #获取在线人数
 ```
 
 更多疑问请+qq群 233415606

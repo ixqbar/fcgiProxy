@@ -41,16 +41,25 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Logger.Printf("%+v", rv)
-
 	clientUUID := rv.Get("uuid")
 	if len(clientUUID) == 0 {
 		clientUUID = uuid.New().String()
 	}
 
-	client := Clients.AddNewClient(clientUUID, conn)
-
 	Logger.Printf("client %s[%s] connected with query[%s]", conn.RemoteAddr(), clientUUID, r.URL.RawQuery)
+
+	client := Clients.GetClient(clientUUID)
+	if client != nil {
+		client.Close()
+	}
+
+	client = Clients.AddNewClient(clientUUID, conn)
+
+	defer func() {
+		Clients.RemoveClient(clientUUID)
+		Logger.Printf("client %s[%s] disconnected", conn.RemoteAddr(), clientUUID)
+	}()
+
 
 	env := make(map[string]string)
 	env["SCRIPT_FILENAME"] = Config.ScriptFileName
@@ -71,50 +80,46 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			Logger.Print(err)
-			return
+			Logger.Printf("client %s[%s] read err message failed %s", conn.RemoteAddr(),clientUUID, err)
+			break
 		}
 
 		if messageType != websocket.TextMessage {
-			Logger.Printf("read err message type from %s", conn.RemoteAddr())
-			return
+			Logger.Printf("client %s[%s] read err message type", conn.RemoteAddr(),clientUUID)
+			break
 		}
 
 		body.Reset(p)
 
-		Logger.Printf("request :%s  len=%d", string(p), body.Len())
+		Logger.Printf("client %s[%s] request body [%s][%d]", conn.RemoteAddr(), clientUUID, string(p), body.Len())
 
 		fcgi, err := fcgiclient.Dial("tcp", Config.FcgiServerAddress)
 		if err != nil {
 			Logger.Print(err)
-			return
+			break
 		}
 
 		resp, err := fcgi.Post(env, "application/octet-stream", body, body.Len())
 		if err != nil {
-			Logger.Printf("read fcgi response failed %s", err)
+			Logger.Printf("client %s[%s] read fcgi response failed %s", conn.RemoteAddr(), clientUUID, err)
 			fcgi.Close()
-			return
+			break
 		}
 
 		content, err := ioutil.ReadAll(resp.Body)
 		fcgi.Close()
 
 		if err != nil {
-			Logger.Printf("read fcgi response failed %s", err)
-			return
+			Logger.Printf("client %s[%s] read fcgi response failed %s", conn.RemoteAddr(), clientUUID, err)
+			break
 		}
 
 		err = client.PushMessage(content)
 		if err != nil {
-			Logger.Printf("response failed %s", err)
-			return
+			Logger.Printf("client %s[%s] response failed %s", conn.RemoteAddr(), clientUUID, err)
+			break
 		}
 	}
-
-	Clients.RemoveClient(clientUUID)
-
-	Logger.Print("client %s[%s] disconnected", conn.RemoteAddr(), clientUUID)
 }
 
 func WebSocket(ctx context.Context) *http.Server {

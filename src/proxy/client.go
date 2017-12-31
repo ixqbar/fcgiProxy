@@ -4,16 +4,17 @@ import (
 	"github.com/gorilla/websocket"
 	"time"
 	"sync"
-	"sync/atomic"
 	"errors"
 	"fmt"
 )
 
 type Client struct {
 	sync.Mutex
-	Uuid string
+	UUID string
 	conn *websocket.Conn
 	joinTime int64
+	alive bool
+	over chan bool
 }
 
 func (obj *Client) PushMessage(message []byte) error {
@@ -23,9 +24,25 @@ func (obj *Client) PushMessage(message []byte) error {
 	return obj.conn.WriteMessage(websocket.TextMessage, message)
 }
 
+func (obj *Client) Close() {
+	obj.Lock()
+	defer obj.Unlock()
+
+	obj.conn.SetReadDeadline(time.Now())
+	obj.alive = false
+	<- obj.over
+}
+
+func (obj *Client) remove() {
+	if obj.alive == false {
+		obj.over <- true
+	}
+}
+
+
 type RequestClients struct {
 	sync.Mutex
-	Num int64
+	num int
 	Clients map[string]*Client
 }
 
@@ -33,9 +50,11 @@ var Clients = NewRequestClients()
 
 func NewClient(uuid string, conn *websocket.Conn) *Client {
 	return &Client{
-		Uuid:uuid,
+		UUID:uuid,
 		conn:conn,
 		joinTime:time.Now().Unix(),
+		over:make(chan bool),
+		alive:true,
 	}
 }
 
@@ -49,7 +68,7 @@ func (obj *RequestClients) AddNewClient(uuid string, conn *websocket.Conn) *Clie
 	obj.Lock()
 	defer obj.Unlock()
 
-	atomic.AddInt64(&obj.Num, 1)
+	obj.num++
 	obj.Clients[uuid] = NewClient(uuid, conn)
 
 	return obj.Clients[uuid]
@@ -59,7 +78,8 @@ func (obj *RequestClients) RemoveClient(uuid string)  {
 	obj.Lock()
 	defer obj.Unlock()
 
-	atomic.AddInt64(&obj.Num, -1)
+	obj.Clients[uuid].remove()
+	obj.num--
 	delete(obj.Clients, uuid)
 }
 
@@ -81,16 +101,27 @@ func (obj *RequestClients) BroadcastMessage(message []byte) error  {
 	for _, val := range obj.Clients {
 		err := val.PushMessage(message)
 		if err != nil {
-			Logger.Printf("broadcast message to %s failed %s", val.Uuid, err)
+			Logger.Printf("broadcast message to %s failed %s", val.UUID, err)
 		}
 	}
 
 	return nil
 }
 
-func (obj *RequestClients) Number() int64 {
+func (obj *RequestClients) Number() int {
 	obj.Lock()
 	defer obj.Unlock()
 
-	return obj.Num
+	return obj.num
+}
+
+func (obj *RequestClients) GetClient(uuid string) (*Client) {
+	obj.Lock()
+	defer obj.Unlock()
+
+	if _, ok := obj.Clients[uuid]; !ok {
+		return nil
+	}
+
+	return obj.Clients[uuid]
 }

@@ -33,6 +33,10 @@ func (obj *proxyRedisHandle) Version() (string, error) {
 	return VERSION, nil
 }
 
+func (obj *proxyRedisHandle) Number() (int, error) {
+	return Clients.Number(), nil
+}
+
 func (obj *proxyRedisHandle) Set(uuid string, message []byte) (error) {
 	if uuid == "*" {
 		Clients.BroadcastMessage(message)
@@ -91,6 +95,6 @@ func Run() {
 		Logger.Print(err)
 	}
 
-	time.Sleep(time.Duration(10) * time.Second)
+	time.Sleep(time.Duration(5) * time.Second)
 }
 
