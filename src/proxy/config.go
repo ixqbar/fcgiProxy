@@ -5,11 +5,28 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type ProxyParams struct {
 	Key   string `xml:"key"`
 	Value string `xml:"value"`
+}
+
+type OrignList []string
+
+func (l *OrignList) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var content string
+	if err := d.DecodeElement(&content, &start); err != nil {
+		return err
+	}
+
+	*l = strings.Split(strings.ToLower(content), ",")
+	return nil
+}
+
+func (l *OrignList) ToString() string {
+	return strings.Join(*l, ",")
 }
 
 type ProxyConfig struct {
@@ -19,6 +36,7 @@ type ProxyConfig struct {
 	ScriptFileName     string        `xml:"script_filename"`
 	QueryString        string        `xml:"query_string"`
 	HeaderParams       []ProxyParams `xml:"header_params>param"`
+	Origins            OrignList     `xml:"origins"`
 }
 
 var Config *ProxyConfig

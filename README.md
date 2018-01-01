@@ -1,5 +1,5 @@
 
-### version 0.0.3
+### version 0.0.4
 
 ### description
 ```
@@ -28,6 +28,7 @@ fcgiProxy --config=config.xml
 			<value>0.0.1</value>
 		</param>
 	</header_params>
+	<origins>*</origins>
 </config>
 ```
 

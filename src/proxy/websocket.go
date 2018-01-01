@@ -17,7 +17,13 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		origin := strings.ToLower(r.Header.Get("Origin"))
+		Logger.Printf("client %s Origin=%s request websocket server", r.RemoteAddr, origin)
+		if InStringArray("*", Config.Origins) || InStringArray(origin, Config.Origins) {
+			return true
+		}
+
+		return false
 	},
 }
 
