@@ -1,14 +1,13 @@
 package proxy
 
 import (
+	"context"
 	"errors"
+	"github.com/jonnywang/go-kits/redis"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	"github.com/jonnywang/go-kits/redis"
-	"context"
-	"time"
 )
 
 var (
@@ -26,7 +25,7 @@ func (obj *proxyRedisHandle) Init() error {
 }
 
 func (obj *proxyRedisHandle) Shutdown() {
-
+	Logger.Print("redis server will shutdown")
 }
 
 func (obj *proxyRedisHandle) Version() (string, error) {
@@ -37,7 +36,7 @@ func (obj *proxyRedisHandle) Number() (int, error) {
 	return Clients.Number(), nil
 }
 
-func (obj *proxyRedisHandle) Del(clientUUID string) (error) {
+func (obj *proxyRedisHandle) Del(clientUUID string) error {
 	if clientUUID == "*" {
 		Clients.RemoveAll()
 	} else {
@@ -50,7 +49,7 @@ func (obj *proxyRedisHandle) Del(clientUUID string) (error) {
 	return nil
 }
 
-func (obj *proxyRedisHandle) Set(clientUUID string, message []byte) (error) {
+func (obj *proxyRedisHandle) Set(clientUUID string, message []byte) error {
 	if clientUUID == "*" {
 		Clients.BroadcastMessage(message)
 	} else {
@@ -82,23 +81,24 @@ func Run() {
 		return
 	}
 
-	sigs := make(chan os.Signal)
-	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
+	redisStop := make(chan int)
+	stopSignal := make(chan os.Signal)
+	signal.Notify(stopSignal, syscall.SIGTERM, syscall.SIGINT)
 
 	ctx, cancel := context.WithCancel(context.Background())
-
-	httpServer := WebSocket(ctx)
+	httpServer, httpStop := NewWebSocket()
 
 	go func() {
-		<-sigs
+		<-stopSignal
 		Logger.Print("catch exit signal")
 		cancel()
-		server.Stop(10)
 		proxyRedisHandle.Shutdown()
+		server.Stop(10)
 		err := httpServer.Shutdown(ctx)
 		if err != nil {
 			Logger.Print(err)
 		}
+		redisStop <- 1
 	}()
 
 	Logger.Printf("redis protocol server run at %s", Config.AdminServerAddress)
@@ -108,6 +108,8 @@ func Run() {
 		Logger.Print(err)
 	}
 
-	time.Sleep(time.Duration(5) * time.Second)
-}
+	<-redisStop
+	<-httpStop
 
+	Logger.Print("all server shutdown")
+}

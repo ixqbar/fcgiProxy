@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/fcgi"
-	"net"
 )
 
 type FastCGIServer struct{}

@@ -8,17 +8,17 @@ import (
 )
 
 type ProxyParams struct {
-	Key string `xml:"key"`
+	Key   string `xml:"key"`
 	Value string `xml:"value"`
-} 
+}
 
 type ProxyConfig struct {
-	AdminServerAddress string `xml:"admin_server"`
-	HttpServerAddress string `xml:"http_server"`
-	FcgiServerAddress string `xml:"fcgi_server"`
-	ScriptFileName string `xml:"script_filename"`
-	QueryString string `xml:"query_string"`
-	HeaderParams []ProxyParams `xml:"header_params>param"`
+	AdminServerAddress string        `xml:"admin_server"`
+	HttpServerAddress  string        `xml:"http_server"`
+	FcgiServerAddress  string        `xml:"fcgi_server"`
+	ScriptFileName     string        `xml:"script_filename"`
+	QueryString        string        `xml:"query_string"`
+	HeaderParams       []ProxyParams `xml:"header_params>param"`
 }
 
 var Config *ProxyConfig

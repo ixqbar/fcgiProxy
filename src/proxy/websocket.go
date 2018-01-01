@@ -2,16 +2,15 @@ package proxy
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/tomasen/fcgi_client"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
-	"net/url"
 )
 
 var upgrader = websocket.Upgrader{
@@ -80,7 +79,6 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 	remoteInfo := strings.Split(conn.RemoteAddr().String(), ":")
 	env["REMOTE_ADDR"] = remoteInfo[0]
 	env["REMOTE_PORT"] = remoteInfo[1]
-
 	env["PROXY_UUID"] = clientUUID
 
 	body := bytes.NewReader(nil)
@@ -93,7 +91,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if messageType != websocket.TextMessage {
-			Logger.Printf("client %s[%s] read err message type", conn.RemoteAddr(),clientUUID)
+			Logger.Printf("client %s[%s] read err message type", conn.RemoteAddr(), clientUUID)
 			break
 		}
 
@@ -130,7 +128,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func WebSocket(ctx context.Context) *http.Server {
+func NewWebSocket() (*http.Server, chan int) {
 	http.HandleFunc("/", defaultHttpHandle)
 	http.HandleFunc("/proxy", proxyHttpHandle)
 
@@ -142,14 +140,17 @@ func WebSocket(ctx context.Context) *http.Server {
 		MaxHeaderBytes: 1 << 20,
 	}
 
+	httpStop := make(chan int)
+
 	go func() {
 		Logger.Printf("http server will run at %s", Config.HttpServerAddress)
 		err := httpServer.ListenAndServe()
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			Logger.Print(err)
 		}
-		Logger.Printf("http server will stop at %s", Config.HttpServerAddress)
+		Logger.Printf("http server stop at %s", Config.HttpServerAddress)
+		httpStop <- 1
 	}()
 
-	return httpServer
+	return httpServer, httpStop
 }

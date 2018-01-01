@@ -1,16 +1,16 @@
 package proxy
 
 import (
-	"os"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"crypto/md5"
 	"io"
-	"encoding/hex"
+	"os"
 	"strings"
 )
 
-func CheckFileIsDirectory(path string) (bool, error)  {
+func CheckFileIsDirectory(path string) (bool, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return false, err
@@ -62,14 +62,14 @@ func GetFileMD5sum(file string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func HasIntersection(a []string, b []string) bool  {
+func HasIntersection(a []string, b []string) bool {
 	if len(a) == 0 || len(b) == 0 {
 		return false
 	}
 
 	t := strings.Join(b, "%") + "%"
-	for _,v := range a {
-		if strings.Contains(t, v + "%") {
+	for _, v := range a {
+		if strings.Contains(t, v+"%") {
 			return true
 		}
 	}

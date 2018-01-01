@@ -1,20 +1,20 @@
 package proxy
 
 import (
-	"github.com/gorilla/websocket"
-	"time"
-	"sync"
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
+	"sync"
+	"time"
 )
 
 type Client struct {
 	sync.Mutex
-	UUID string
-	conn *websocket.Conn
+	UUID     string
+	conn     *websocket.Conn
 	joinTime int64
-	alive bool
-	over chan bool
+	alive    bool
+	over     chan bool
 }
 
 func (obj *Client) PushMessage(message []byte) error {
@@ -33,7 +33,7 @@ func (obj *Client) Close() {
 		Logger.Printf("client %s[%s] SetReadDeadline failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
 	}
 	obj.alive = false
-	<- obj.over
+	<-obj.over
 }
 
 func (obj *Client) Remove() {
@@ -44,10 +44,9 @@ func (obj *Client) Remove() {
 	obj.over <- true
 }
 
-
 type RequestClients struct {
 	sync.Mutex
-	num int
+	num     int
 	Clients map[string]*Client
 }
 
@@ -55,17 +54,17 @@ var Clients = NewRequestClients()
 
 func NewClient(uuid string, conn *websocket.Conn) *Client {
 	return &Client{
-		UUID:uuid,
-		conn:conn,
-		joinTime:time.Now().Unix(),
-		over:make(chan bool),
-		alive:true,
+		UUID:     uuid,
+		conn:     conn,
+		joinTime: time.Now().Unix(),
+		over:     make(chan bool),
+		alive:    true,
 	}
 }
 
 func NewRequestClients() *RequestClients {
 	return &RequestClients{
-		Clients:make(map[string]*Client),
+		Clients: make(map[string]*Client),
 	}
 }
 
@@ -79,7 +78,7 @@ func (obj *RequestClients) AddNewClient(uuid string, conn *websocket.Conn) *Clie
 	return obj.Clients[uuid]
 }
 
-func (obj *RequestClients) RemoveClient(uuid string)  {
+func (obj *RequestClients) RemoveClient(uuid string) {
 	obj.Lock()
 	defer obj.Unlock()
 
@@ -99,7 +98,7 @@ func (obj *RequestClients) PushMessage(uuid string, message []byte) error {
 	return obj.Clients[uuid].PushMessage(message)
 }
 
-func (obj *RequestClients) BroadcastMessage(message []byte) error  {
+func (obj *RequestClients) BroadcastMessage(message []byte) error {
 	obj.Lock()
 	defer obj.Unlock()
 
@@ -120,7 +119,7 @@ func (obj *RequestClients) Number() int {
 	return obj.num
 }
 
-func (obj *RequestClients) GetClient(uuid string) (*Client) {
+func (obj *RequestClients) GetClient(uuid string) *Client {
 	obj.Lock()
 	defer obj.Unlock()
 
