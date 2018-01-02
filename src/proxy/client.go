@@ -143,6 +143,7 @@ func (obj *Client) Close() {
 	}
 	obj.alive = false
 	<-obj.over
+	close(obj.message)
 }
 
 func (obj *Client) Remove() {

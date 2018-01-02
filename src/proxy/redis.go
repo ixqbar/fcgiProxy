@@ -111,5 +111,9 @@ func Run() {
 	<-redisStop
 	<-httpStop
 
+	close(stopSignal)
+	close(redisStop)
+	close(httpStop)
+
 	Logger.Print("all server shutdown")
 }
