@@ -1,12 +1,9 @@
 package proxy
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/tomasen/fcgi_client"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -58,80 +55,15 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 		client.Close()
 	}
 
-	client = Clients.AddNewClient(clientUUID, conn)
+	client = Clients.AddNewClient(clientUUID, conn, r)
 
 	defer func() {
 		Clients.RemoveClient(clientUUID)
 		Logger.Printf("client %s[%s] disconnected", conn.RemoteAddr(), clientUUID)
 	}()
 
-	qstr := r.URL.RawQuery
-	if len(qstr) == 0 {
-		qstr = Config.QueryString
-	} else {
-		qstr = fmt.Sprintf("%s&%s", qstr, Config.QueryString)
-	}
-
-	Logger.Printf("client %s[%s] final query[%s]", conn.RemoteAddr(), clientUUID, qstr)
-
-	env := make(map[string]string)
-	env["SCRIPT_FILENAME"] = Config.ScriptFileName
-	env["QUERY_STRING"] = qstr
-
-	for _, item := range Config.HeaderParams {
-		env[item.Key] = item.Value
-	}
-
-	remoteInfo := strings.Split(conn.RemoteAddr().String(), ":")
-	env["REMOTE_ADDR"] = remoteInfo[0]
-	env["REMOTE_PORT"] = remoteInfo[1]
-	env["PROXY_UUID"] = clientUUID
-
-	body := bytes.NewReader(nil)
-
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			Logger.Printf("client %s[%s] read err message failed %s", conn.RemoteAddr(), clientUUID, err)
-			break
-		}
-
-		if messageType != websocket.TextMessage {
-			Logger.Printf("client %s[%s] read err message type", conn.RemoteAddr(), clientUUID)
-			break
-		}
-
-		body.Reset(p)
-
-		Logger.Printf("client %s[%s] request body [%s][%d]", conn.RemoteAddr(), clientUUID, string(p), body.Len())
-
-		fcgi, err := fcgiclient.Dial("tcp", Config.FcgiServerAddress)
-		if err != nil {
-			Logger.Print(err)
-			break
-		}
-
-		resp, err := fcgi.Post(env, "application/octet-stream", body, body.Len())
-		if err != nil {
-			Logger.Printf("client %s[%s] read fcgi response failed %s", conn.RemoteAddr(), clientUUID, err)
-			fcgi.Close()
-			break
-		}
-
-		content, err := ioutil.ReadAll(resp.Body)
-		fcgi.Close()
-
-		if err != nil {
-			Logger.Printf("client %s[%s] read fcgi response failed %s", conn.RemoteAddr(), clientUUID, err)
-			break
-		}
-
-		err = client.PushMessage(content)
-		if err != nil {
-			Logger.Printf("client %s[%s] response failed %s", conn.RemoteAddr(), clientUUID, err)
-			break
-		}
-	}
+	go client.PipeSendMessage()
+	client.PipeReadMessage()
 }
 
 func NewWebSocket() (*http.Server, chan int) {

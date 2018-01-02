@@ -8,7 +8,7 @@
 	<header_params>
 		<param>
 			<key>ProxyVersion</key>
-			<value>0.0.4</value>
+			<value>0.0.5</value>
 		</param>
 	</header_params>
 	<origins>*</origins>
