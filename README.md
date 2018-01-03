@@ -39,6 +39,23 @@ set * message        #给所有客户端推送消息
 number               #获取在线人数
 del *                #剔除所有在线客户端
 del {uuid}           #剔除指定在线客户端， uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
+subscribe channel
+publish channel message
+```
+
+### pub&sub
+```
+<?php
+
+ini_set('default_socket_timeout', -1);
+
+$redis_handle = new Redis();
+$redis_handle->connect('127.0.0.1', 6899, 30);
+$redis_handle->subscribe(array('*'), function($redis_handle, $chan, $message){
+	//服务器间隔5秒发送PING
+	if ($message == 'PING') return; 
+	echo $chan . '-' . $message . PHP_EOL;
+});
 ```
 
 更多疑问请+qq群 233415606
