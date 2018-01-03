@@ -25,7 +25,7 @@ type Client struct {
 }
 
 func (obj *Client) PipeSendMessage() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(15 * time.Second)
 
 	Logger.Printf("client %s[%s] waiting for message send", obj.conn.RemoteAddr(), obj.UUID)
 
@@ -33,6 +33,8 @@ func (obj *Client) PipeSendMessage() {
 		Logger.Printf("client %s[%s] got pong message %s", obj.conn.RemoteAddr(), obj.UUID, appData)
 		return obj.conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 	})
+
+	defer ticker.Stop()
 
 	for {
 		select {
@@ -67,20 +69,28 @@ func (obj *Client) PipeReadMessage() {
 
 	Logger.Printf("client %s[%s] final query[%s]", obj.conn.RemoteAddr(), obj.UUID, qstr)
 
-	env := make(map[string]string)
-	env["SCRIPT_FILENAME"] = Config.ScriptFileName
-	env["QUERY_STRING"] = qstr
-
-	for _, item := range Config.HeaderParams {
-		env[item.Key] = item.Value
-	}
+	var env map[string]string
+	var body *bytes.Reader
 
 	remoteInfo := strings.Split(obj.conn.RemoteAddr().String(), ":")
-	env["REMOTE_ADDR"] = remoteInfo[0]
-	env["REMOTE_PORT"] = remoteInfo[1]
-	env["PROXY_UUID"] = obj.UUID
 
-	body := bytes.NewReader(nil)
+	if len(Config.ScriptFileName) > 0 {
+		env = make(map[string]string)
+		env["SCRIPT_FILENAME"] = Config.ScriptFileName
+		env["QUERY_STRING"] = qstr
+
+		for _, item := range Config.HeaderParams {
+			env[item.Key] = item.Value
+		}
+
+		env["REMOTE_ADDR"] = remoteInfo[0]
+		env["REMOTE_PORT"] = remoteInfo[1]
+		env["PROXY_UUID"] = obj.UUID
+
+		body = bytes.NewReader(nil)
+	}
+
+	pubSubMessage := NewPubSubMessage(obj.UUID, remoteInfo[0], remoteInfo[1], qstr)
 
 	for {
 		messageType, p, err := obj.conn.ReadMessage()
@@ -92,6 +102,13 @@ func (obj *Client) PipeReadMessage() {
 		if messageType != websocket.TextMessage {
 			Logger.Printf("client %s[%s] read err message type", obj.conn.RemoteAddr(), obj.UUID)
 			break
+		}
+
+		pubSubMessage.UpdateMessage(p)
+		FcgiRedis.Publish("*", pubSubMessage.Data())
+
+		if body == nil {
+			continue
 		}
 
 		body.Reset(p)

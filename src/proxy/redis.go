@@ -14,29 +14,30 @@ var (
 	ERR_PARAMS = errors.New("error params")
 )
 
-type proxyRedisHandle struct {
+type FcgiRedisHandle struct {
 	redis.RedisHandler
 	sync.Mutex
 }
 
-func (obj *proxyRedisHandle) Init() error {
+func (obj *FcgiRedisHandle) Init() error {
+	obj.Initiation()
 
 	return nil
 }
 
-func (obj *proxyRedisHandle) Shutdown() {
+func (obj *FcgiRedisHandle) Shutdown() {
 	Logger.Print("redis server will shutdown")
 }
 
-func (obj *proxyRedisHandle) Version() (string, error) {
+func (obj *FcgiRedisHandle) Version() (string, error) {
 	return VERSION, nil
 }
 
-func (obj *proxyRedisHandle) Number() (int, error) {
+func (obj *FcgiRedisHandle) Number() (int, error) {
 	return Clients.Number(), nil
 }
 
-func (obj *proxyRedisHandle) Del(clientUUID string) error {
+func (obj *FcgiRedisHandle) Del(clientUUID string) error {
 	if clientUUID == "*" {
 		Clients.RemoveAll()
 	} else {
@@ -49,33 +50,72 @@ func (obj *proxyRedisHandle) Del(clientUUID string) error {
 	return nil
 }
 
-func (obj *proxyRedisHandle) Set(clientUUID string, message []byte) error {
+func (obj *FcgiRedisHandle) Set(clientUUID string, message []byte) error {
 	if clientUUID == "*" {
 		Clients.BroadcastMessage(message)
 	} else {
 		Clients.PushMessage(clientUUID, message)
 	}
+
 	return nil
 }
 
+func (obj *FcgiRedisHandle) Subscribe(client *redis.Client, channelNames ...[]byte) (*redis.MultiChannelWriter, error) {
+	if len(channelNames) == 0 {
+		return nil, ERR_PARAMS
+	}
+
+	client.UseSubscribe = true
+	client.Handler = &obj.RedisHandler
+
+	ret := redis.NewMultiChannelWriter(len(channelNames))
+	for _, channelName := range channelNames {
+		cw := redis.NewChannelWriter(client.Host, string(channelName))
+		if obj.SubChannels[string(channelName)] == nil {
+			obj.SubChannels[string(channelName)] = []*redis.ChannelWriter{cw}
+		} else {
+			obj.SubChannels[string(channelName)] = append(obj.SubChannels[string(channelName)], cw)
+		}
+		ret.ChannelWriters = append(ret.ChannelWriters, cw)
+	}
+
+	return ret, nil
+}
+
+func (obj *FcgiRedisHandle) Publish(channelName string, message []byte) (int, error) {
+	Logger.Printf("publish message to %s[%d:%d]", channelName, len(obj.SubChannels), len(obj.SubChannels[channelName]))
+	if len(message) == 0 {
+		return 0, nil
+	}
+
+	v, ok := obj.SubChannels[channelName]
+	if !ok {
+		return 0, nil
+	}
+
+	i := 0
+	for _, c := range v {
+		err := c.PublishMessage(message)
+		if err != nil {
+			Logger.Printf("publish %s to %s failed %s", channelName, c.ClientRequest.Host, err)
+			continue
+		}
+		i++
+	}
+
+	return i, nil
+}
+
+var FcgiRedis = &FcgiRedisHandle{}
+
 func Run() {
-	proxyRedisHandle := &proxyRedisHandle{}
-
-	proxyRedisHandle.SetShield("Init")
-	proxyRedisHandle.SetShield("Shutdown")
-	proxyRedisHandle.SetShield("Lock")
-	proxyRedisHandle.SetShield("Unlock")
-	proxyRedisHandle.SetShield("SetShield")
-	proxyRedisHandle.SetShield("SetConfig")
-	proxyRedisHandle.SetShield("CheckShield")
-
-	err := proxyRedisHandle.Init()
+	err := FcgiRedis.Init()
 	if err != nil {
 		Logger.Print(err)
 		return
 	}
 
-	server, err := redis.NewServer(Config.AdminServerAddress, proxyRedisHandle)
+	server, err := redis.NewServer(Config.AdminServerAddress, FcgiRedis)
 	if err != nil {
 		Logger.Print(err)
 		return
@@ -92,7 +132,7 @@ func Run() {
 		<-stopSignal
 		Logger.Print("catch exit signal")
 		cancel()
-		proxyRedisHandle.Shutdown()
+		FcgiRedis.Shutdown()
 		server.Stop(10)
 		err := httpServer.Shutdown(ctx)
 		if err != nil {
