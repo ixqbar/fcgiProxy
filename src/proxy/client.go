@@ -145,7 +145,11 @@ func (obj *Client) PipeReadMessage() {
 }
 
 func (obj *Client) PushMessage(message []byte) error {
-	obj.message <- message
+	select {
+	case obj.message <- message:
+	default:
+		return errors.New(fmt.Sprintf("push message to client %s[%s] failed", obj.conn.RemoteAddr(), obj.UUID))
+	}
 
 	return nil
 }

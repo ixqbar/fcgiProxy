@@ -3,9 +3,11 @@ package proxy
 import (
 	"encoding/json"
 	"time"
+	"github.com/google/uuid"
 )
 
 type PubSubMessage struct {
+	ID string `json:"id"`
 	UUID string `json:"uuid"`
 	IP string 	`json:"ip"`
 	Port string `json:"port"`
@@ -24,6 +26,7 @@ func NewPubSubMessage(uuid string, ip string, port string, vars string) *PubSubM
 }
 
 func (obj *PubSubMessage) UpdateMessage(message []byte)  {
+	obj.ID = uuid.New().String()
 	obj.Message = string(message)
 	obj.Time = time.Now()
 }
