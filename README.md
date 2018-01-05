@@ -1,5 +1,5 @@
 
-### version 0.0.6
+### version 0.0.7
 
 ### description
 ```
@@ -21,11 +21,11 @@ fcgiProxy --config=config.xml
 	<http_server>0.0.0.0:8899</http_server>
 	<fcgi_server>0.0.0.0:9000</fcgi_server>
 	<script_filename>/Users/xingqiba/workspace/php/zwj2-beta/zwj2/app/src/game_server/test/proxy.php</script_filename>
-	<query_string><![CDATA[name=xingqiba&version=0.0.1]]></query_string>
+	<query_string><![CDATA[name=xingqiba&version=0.0.7]]></query_string>
 	<header_params>
 		<param>
 			<key>ProxyVersion</key>
-			<value>0.0.6</value>
+			<value>0.0.7</value>
 		</param>
 	</header_params>
 	<origins>*</origins>
@@ -39,8 +39,8 @@ set * message        #给所有客户端推送消息
 number               #获取在线人数
 del *                #剔除所有在线客户端
 del {uuid}           #剔除指定在线客户端， uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
-subscribe channel
-publish channel message
+subscribe channel       #订阅频道  系统默认频道*
+publish channel message #发布消息到指定频道
 ```
 
 ### pub&sub
@@ -56,6 +56,11 @@ $redis_handle->subscribe(array('*'), function($redis_handle, $chan, $message){
 	if ($message == 'PING') return; 
 	echo $chan . '-' . $message . PHP_EOL;
 });
+```
+
+### http
+```
+curl 'http://127.0.0.1:8899/?format=json'  #获取统计信息
 ```
 
 更多疑问请+qq群 233415606

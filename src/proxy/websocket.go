@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"encoding/json"
 )
 
 var upgrader = websocket.Upgrader{
@@ -24,8 +25,36 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+func faviconHttpHandle(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte{})
+}
+
 func defaultHttpHandle(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "version: %s", VERSION)
+	for {
+		rv, err := url.ParseQuery(r.URL.RawQuery)
+		if err != nil || rv.Get("format") != "json"{
+			break
+		}
+
+		ret, err := json.Marshal(struct{
+			Version string `json:"version"`
+			Time int64 `json:"time"`
+			Total int `json:"total"`
+		}{VERSION, time.Now().UnixNano() / 1e6, Clients.num})
+
+		if err != nil{
+			break
+		}
+
+		w.Header().Set("Content-Type", "text/json")
+		w.Write(ret)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprintf(w, "version: %s<br/>", VERSION)
+	fmt.Fprintf(w, "time: %f<br/>", time.Now().UnixNano() / 1e6)
+	fmt.Fprintf(w, "total: %d<br/>", Clients.num)
 }
 
 func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +97,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 func NewWebSocket() (*http.Server, chan int) {
 	http.HandleFunc("/", defaultHttpHandle)
+	http.HandleFunc("/favicon.ico", faviconHttpHandle)
 	http.HandleFunc("/proxy", proxyHttpHandle)
 
 	httpServer := &http.Server{

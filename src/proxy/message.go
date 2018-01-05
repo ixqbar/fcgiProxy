@@ -13,7 +13,7 @@ type PubSubMessage struct {
 	Port string `json:"port"`
 	Vars string `json:"vars"`
 	Message string `json:"message"`
-	Time time.Time `json:"time"`
+	Time int64 `json:"time"`
 }
 
 func NewPubSubMessage(uuid string, ip string, port string, vars string) *PubSubMessage {
@@ -28,7 +28,7 @@ func NewPubSubMessage(uuid string, ip string, port string, vars string) *PubSubM
 func (obj *PubSubMessage) UpdateMessage(message []byte)  {
 	obj.ID = uuid.New().String()
 	obj.Message = string(message)
-	obj.Time = time.Now()
+	obj.Time = time.Now().UnixNano() / 1e6
 }
 
 func (obj *PubSubMessage) Data() []byte {
