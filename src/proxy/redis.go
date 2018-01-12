@@ -138,6 +138,7 @@ func Run() {
 		if err != nil {
 			Logger.Print(err)
 		}
+		LoggerMessageRecord.Stop()
 		redisStop <- 1
 	}()
 

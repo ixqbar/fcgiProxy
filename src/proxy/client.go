@@ -11,17 +11,19 @@ import (
 	"io/ioutil"
 	"strings"
 	"bytes"
+	"net/url"
 )
 
 type Client struct {
 	sync.Mutex
-	UUID     string
-	conn     *websocket.Conn
-	joinTime int64
-	alive    bool
-	over     chan bool
-	request  *http.Request
-	message chan []byte
+	UUID          string
+	conn          *websocket.Conn
+	joinTime      int64
+	alive         bool
+	over          chan bool
+	request       *http.Request
+	requestValues *url.Values
+	message       chan []byte
 }
 
 func (obj *Client) PipeSendMessage() {
@@ -38,21 +40,21 @@ func (obj *Client) PipeSendMessage() {
 
 	for {
 		select {
-			case <-ticker.C:
-				if err := obj.conn.WriteMessage(websocket.PingMessage, []byte("PING")); err != nil {
-					return
-				}
-				Logger.Printf("client %s[%s] send ping message PING", obj.conn.RemoteAddr(), obj.UUID)
-			case message, ok := <-obj.message:
-				if !ok {
-					obj.conn.WriteMessage(websocket.CloseMessage, []byte{})
-					return
-				}
+		case <-ticker.C:
+			if err := obj.conn.WriteMessage(websocket.PingMessage, []byte("PING")); err != nil {
+				return
+			}
+			Logger.Printf("client %s[%s] send ping message PING", obj.conn.RemoteAddr(), obj.UUID)
+		case message, ok := <-obj.message:
+			if !ok {
+				obj.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
 
-				if err := obj.conn.WriteMessage(websocket.TextMessage, message); err != nil {
-					Logger.Print(err)
-					return
-				}
+			if err := obj.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+				Logger.Print(err)
+				return
+			}
 		}
 	}
 
@@ -60,10 +62,8 @@ func (obj *Client) PipeSendMessage() {
 }
 
 func (obj *Client) PipeReadMessage() {
-	qstr := obj.request.URL.RawQuery
-	if len(qstr) == 0 {
-		qstr = Config.QueryString
-	} else {
+	qstr := Config.QueryString
+	if len(obj.request.URL.RawQuery) >= 0 {
 		qstr = fmt.Sprintf("%s&%s", qstr, Config.QueryString)
 	}
 
@@ -90,10 +90,14 @@ func (obj *Client) PipeReadMessage() {
 		body = bytes.NewReader(nil)
 	}
 
-	pubSubMessage := NewPubSubMessage(obj.UUID, remoteInfo[0], remoteInfo[1], qstr)
+	requestNoProxy := IsFalse(obj.requestValues.Get("proxy"))
+	pubSubChannel := obj.requestValues.Get("channel")
+	pubSubMessage := NewPubSubMessage(obj.UUID, remoteInfo[0], remoteInfo[1], qstr, obj.request.Header.Get("User-Agent"))
+
+	var pubSubData []byte
 
 	for {
-		messageType, p, err := obj.conn.ReadMessage()
+		messageType, messageContent, err := obj.conn.ReadMessage()
 		if err != nil {
 			Logger.Printf("client %s[%s] read err message failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
 			break
@@ -104,16 +108,21 @@ func (obj *Client) PipeReadMessage() {
 			break
 		}
 
-		pubSubMessage.UpdateMessage(p)
-		FcgiRedis.Publish("*", pubSubMessage.Data())
+		pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, string(messageContent))
+		pubSubData = pubSubMessage.Data()
 
-		if body == nil {
+		FcgiRedis.Publish("*", pubSubData)
+		if len(pubSubChannel) > 0 {
+			FcgiRedis.Publish(pubSubChannel, pubSubData)
+		}
+
+		if body == nil || requestNoProxy == true {
 			continue
 		}
 
-		body.Reset(p)
+		body.Reset(messageContent)
 
-		Logger.Printf("client %s[%s] request body [%s][%d]", obj.conn.RemoteAddr(), obj.UUID, string(p), body.Len())
+		Logger.Printf("client %s[%s] request body [%s][%d]", obj.conn.RemoteAddr(), obj.UUID, string(messageContent), body.Len())
 
 		fcgi, err := fcgiclient.Dial("tcp", Config.FcgiServerAddress)
 		if err != nil {
@@ -183,15 +192,16 @@ type RequestClients struct {
 
 var Clients = NewRequestClients()
 
-func NewClient(uuid string, conn *websocket.Conn, r *http.Request) *Client {
+func NewClient(uuid string, conn *websocket.Conn, r *http.Request, rv *url.Values) *Client {
 	return &Client{
-		UUID:     uuid,
-		conn:     conn,
-		joinTime: time.Now().Unix(),
-		over:     make(chan bool),
-		alive:    true,
-		request:  r,
-		message: make(chan[]byte),
+		UUID:          uuid,
+		conn:          conn,
+		joinTime:      time.Now().Unix(),
+		over:          make(chan bool),
+		alive:         true,
+		request:       r,
+		requestValues: rv,
+		message:       make(chan []byte),
 	}
 }
 
@@ -201,12 +211,12 @@ func NewRequestClients() *RequestClients {
 	}
 }
 
-func (obj *RequestClients) AddNewClient(uuid string, conn *websocket.Conn, r *http.Request) *Client {
+func (obj *RequestClients) AddNewClient(uuid string, conn *websocket.Conn, r *http.Request, rv *url.Values) *Client {
 	obj.Lock()
 	defer obj.Unlock()
 
 	obj.num++
-	obj.Clients[uuid] = NewClient(uuid, conn, r)
+	obj.Clients[uuid] = NewClient(uuid, conn, r, rv)
 
 	return obj.Clients[uuid]
 }

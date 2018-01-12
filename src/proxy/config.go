@@ -29,19 +29,32 @@ func (l *OrignList) ToString() string {
 	return strings.Join(*l, ",")
 }
 
-type ProxyConfig struct {
-	AdminServerAddress string        `xml:"admin_server"`
-	HttpServerAddress  string        `xml:"http_server"`
-	FcgiServerAddress  string        `xml:"fcgi_server"`
-	ScriptFileName     string        `xml:"script_filename"`
-	QueryString        string        `xml:"query_string"`
-	HeaderParams       []ProxyParams `xml:"header_params>param"`
-	Origins            OrignList     `xml:"origins"`
+type MysqlConfig struct {
+	Ip       string `xml:"ip"`
+	Username string `xml:"username"`
+	Password string `xml:"password"`
+	Port     uint   `xml:"port"`
+	Database string `xml:"database"`
 }
 
-var Config *ProxyConfig
+type FConfig struct {
+	AdminServerAddress  string        `xml:"admin_server"`
+	HttpServerAddress   string        `xml:"http_server"`
+	HttpServerSSLCert   string        `xml:"http_ssl_cert"`
+	HttpServerSSLKey    string        `xml:"http_ssl_key"`
+	HttpStaticRoot      string        `xml:"http_static_root"`
+	FcgiServerAddress   string        `xml:"fcgi_server"`
+	ScriptFileName      string        `xml:"script_filename"`
+	QueryString         string        `xml:"query_string"`
+	HeaderParams        []ProxyParams `xml:"header_params>param"`
+	Origins             OrignList     `xml:"origins"`
+	LoggerMysqlConfig   MysqlConfig   `xml:"logger>mysql"`
+	LoggerRc4EncryptKey string        `xml:"logger>rc4_encrypt_key"`
+}
 
-func ParseXmlConfig(path string) (*ProxyConfig, error) {
+var Config *FConfig
+
+func ParseXmlConfig(path string) (*FConfig, error) {
 	if len(path) == 0 {
 		return nil, errors.New("not found configure xml file")
 	}
@@ -57,7 +70,7 @@ func ParseXmlConfig(path string) (*ProxyConfig, error) {
 	}
 	defer f.Close()
 
-	Config = &ProxyConfig{}
+	Config = &FConfig{}
 
 	data := make([]byte, n)
 

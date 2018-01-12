@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <config>
 	<admin_server>0.0.0.0:6899</admin_server>
+	<!-- http[s] -->
 	<http_server>0.0.0.0:8899</http_server>
+	<http_ssl_cert>/Users/xingqiba/workspace/go/fcgiProxy/ssl/server.crt</http_ssl_cert>
+	<http_ssl_key>/Users/xingqiba/workspace/go/fcgiProxy/ssl/server.key</http_ssl_key>
+	<http_static_root>/Users/xingqiba/workspace/go/fcgiProxy</http_static_root>
+	<!-- fastcgi -->
 	<fcgi_server>0.0.0.0:9000</fcgi_server>
-	<script_filename>/Users/xingqiba/workspace/php/zwj2-beta/zwj2/app/src/game_server/test/proxy.php</script_filename>
+	<script_filename>/Users/xingqiba/workspace/go/fcgiProxy/test/proxy.php</script_filename>
 	<query_string><![CDATA[name=xingqiba&version=0.0.7]]></query_string>
 	<header_params>
 		<param>
@@ -12,4 +17,16 @@
 		</param>
 	</header_params>
 	<origins>*</origins>
+	<logger>
+		<!-- empty is no encrypt -->
+		<rc4_encrypt_key>hello</rc4_encrypt_key>
+		<!-- record logs to mysql-->
+		<mysql>
+			<ip>127.0.0.1</ip>
+			<username>root</username>
+			<password>123456</password>
+			<port>3306</port>
+			<database>zwj2</database>
+		</mysql>
+	</logger>
 </config>

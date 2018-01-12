@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 	"encoding/json"
+	"io/ioutil"
 )
 
 var upgrader = websocket.Upgrader{
@@ -53,7 +54,7 @@ func defaultHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprintf(w, "version: %s<br/>", VERSION)
-	fmt.Fprintf(w, "time: %f<br/>", time.Now().UnixNano() / 1e6)
+	fmt.Fprintf(w, "time: %d<br/>", time.Now().UnixNano() / 1e6)
 	fmt.Fprintf(w, "total: %d<br/>", Clients.num)
 }
 
@@ -84,7 +85,7 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 		client.Close()
 	}
 
-	client = Clients.AddNewClient(clientUUID, conn, r)
+	client = Clients.AddNewClient(clientUUID, conn, r, &rv)
 
 	defer func() {
 		Clients.RemoveClient(clientUUID)
@@ -95,10 +96,73 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 	client.PipeReadMessage()
 }
 
+func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
+	var responseContent = "fail"
+	defer func() {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(responseContent))
+	}()
+
+	if r.Method != http.MethodPost {
+		return
+	}
+
+	rv, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return
+	}
+
+	message, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		Logger.Printf("read client %s post logs failed %s", r.RemoteAddr, err)
+		return
+	}
+
+	if len(Config.LoggerRc4EncryptKey) != 0 {
+		messagePlainText, err := Rc4Decrypt(message, []byte(Config.LoggerRc4EncryptKey))
+		if err != nil {
+			Logger.Printf("read client %s post logs to decrypt failed %s", r.RemoteAddr, err)
+			return
+		}
+		message = messagePlainText
+	}
+
+	var logMessage LogMessage
+	if err := json.Unmarshal(message, &logMessage); err != nil {
+		Logger.Printf("client %s post error type logs content", r.RemoteAddr)
+		return
+	}
+
+	pubsubChannel := rv.Get("channel")
+	remoteInfo := strings.Split(r.RemoteAddr, ":")
+
+	qstr := Config.QueryString
+	if len(r.URL.RawQuery) >= 0 {
+		qstr = fmt.Sprintf("%s&%s", qstr, Config.QueryString)
+	}
+
+	pubSubMessage := NewPubSubMessage(rv.Get("uuid"), remoteInfo[0], remoteInfo[1], qstr, r.Header.Get("User-Agent"))
+	pubSubMessage.UpdateMessage(PubSubMessageTypeIsLogs, logMessage)
+	//publish
+	FcgiRedis.Publish("*", pubSubMessage.Data())
+	if len(pubsubChannel) > 0 {
+		FcgiRedis.Publish(pubsubChannel, pubSubMessage.Data())
+	}
+	//durable
+	pubSubMessage.Durable()
+
+	responseContent = "ok"
+}
+
 func NewWebSocket() (*http.Server, chan int) {
 	http.HandleFunc("/", defaultHttpHandle)
 	http.HandleFunc("/favicon.ico", faviconHttpHandle)
-	http.HandleFunc("/proxy", proxyHttpHandle)
+	http.HandleFunc("/sock", proxyHttpHandle)
+	http.HandleFunc("/logs", logsHttpHandle)
+
+	if len(Config.HttpStaticRoot) > 0 {
+		http.Handle("/res", http.StripPrefix("/res", http.FileServer(http.Dir(Config.HttpStaticRoot))))
+	}
 
 	httpServer := &http.Server{
 		Addr:           Config.HttpServerAddress,
@@ -112,7 +176,16 @@ func NewWebSocket() (*http.Server, chan int) {
 
 	go func() {
 		Logger.Printf("http server will run at %s", Config.HttpServerAddress)
-		err := httpServer.ListenAndServe()
+
+		LoggerMessageRecord.Run()
+
+		var err error
+		if len(Config.HttpServerSSLCert) > 0 && len(Config.HttpServerSSLKey) > 0 {
+			err = httpServer.ListenAndServeTLS(Config.HttpServerSSLCert, Config.HttpServerSSLKey)
+		} else {
+			err = httpServer.ListenAndServe()
+		}
+
 		if err != nil && err != http.ErrServerClosed {
 			Logger.Print(err)
 		}

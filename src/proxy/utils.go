@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"crypto/rc4"
 )
 
 func CheckFileIsDirectory(path string) (bool, error) {
@@ -75,4 +76,37 @@ func HasIntersection(a []string, b []string) bool {
 	}
 
 	return false
+}
+
+func IsFalse(needle string) bool {
+	if len(needle) == 0 {
+		return true
+	}
+
+	haystack := []interface{}{
+		false,
+		0,
+		"false",
+		"",
+	}
+
+	for _, v := range haystack {
+		if v == needle {
+			return true
+		}
+	}
+
+	return false
+}
+
+func Rc4Decrypt(content []byte, key []byte) ([]byte, error) {
+	rc4Cipher, err := rc4.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	plainText := make([]byte, len(content))
+	rc4Cipher.XORKeyStream(plainText, content)
+
+	return plainText, nil
 }
