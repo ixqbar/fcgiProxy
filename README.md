@@ -88,4 +88,20 @@ curl --data '{"id":1,"res":"hh","code":404,"info":"not found"}' 'http://127.0.0.
 * http://xxx.xxx.xxx.xxx:pppp/logs[?channel=推送频道，可选]
 * http://xxx.xxx.xxx.xxx:pppp/res
 
+### log table
+```
+CREATE TABLE `access_logs` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `user_id` int(11) NOT NULL,
+ `user_ip` varchar(20) NOT NULL,
+ `user_agent` varchar(1024) NOT NULL,
+ `resource` varchar(1024) NOT NULL,
+ `code` int(11) NOT NULL,
+ `info` varchar(1024) NOT NULL,
+ `time` int(11) NOT NULL,
+ PRIMARY KEY (`id`),
+ KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
+
 更多疑问请+qq群 233415606
