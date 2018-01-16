@@ -82,7 +82,7 @@ $redis_handle->subscribe(array('*'), function($redis_handle, $chan, $message){
 ### http
 ```
 curl 'http://127.0.0.1:8899/?format=json'  #获取统计信息
-curl --data '{"id":1,"res":"hh","code":404,"info":"not found"}' 'http://127.0.0.1:8899/logs' #提交日志
+curl --data '{"id":1,"res":"hh","type":"request","data":"not found"}' 'http://127.0.0.1:8899/logs' #提交日志
 ```
 * http://xxx.xxx.xxx.xxx:pppp/
 * http://xxx.xxx.xxx.xxx:pppp/logs[?channel=推送频道，可选]
@@ -96,8 +96,8 @@ CREATE TABLE `access_logs` (
  `user_ip` varchar(20) NOT NULL,
  `user_agent` varchar(1024) NOT NULL,
  `resource` varchar(1024) NOT NULL,
- `code` int(11) NOT NULL,
- `info` varchar(1024) NOT NULL,
+ `type` varchar(50) NOT NULL,
+ `content` text NOT NULL,
  `time` int(11) NOT NULL,
  PRIMARY KEY (`id`),
  KEY `user_id` (`user_id`)

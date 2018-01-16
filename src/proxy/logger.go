@@ -8,8 +8,8 @@ import (
 type LogMessage struct {
 	UserID int `json:"id"`
 	Resource string `json:"res"`
-	Code int `json:"code"`
-	Info string `json:"info"`
+	Type string `json:"code"`
+	Content string `json:"info"`
 }
 
 type LogMessageRecord struct {

@@ -74,10 +74,10 @@ function curl($url, $post_data = '', $max_loop=1, $ext_header = array()) {
 }
 
 $content = [
-    'id' => 123,
-    'res' => 'http://127.0.0.1/cdn/game.png',
-    'code' => 404,
-    'info' => 'not found'
+    'id'   => 123,
+    'res'  => 'http://127.0.0.1/cdn/game.png',
+    'type' => "res",
+    'data' => 'not found'
 ];
 
 $result = curl(

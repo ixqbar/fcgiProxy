@@ -33,7 +33,7 @@ func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) (bool) {
 		return false
 	}
 
-	stmtIns, err := obj.mysqlDao.db.Prepare("INSERT INTO access_logs(user_id,user_ip,user_agent,resource,code,info,time) VALUES (?,?,?,?,?,?,?)")
+	stmtIns, err := obj.mysqlDao.db.Prepare("INSERT INTO access_logs(user_id,user_ip,user_agent,resource,type,content,time) VALUES (?,?,?,?,?,?,?)")
 	if err != nil {
 		Logger.Print(err)
 		return false
@@ -45,8 +45,8 @@ func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) (bool) {
 		pubSubMessage.IP,
 		pubSubMessage.UserAgent,
 		logMessage.Resource,
-		logMessage.Code,
-		logMessage.Info,
+		logMessage.Type,
+		logMessage.Content,
 		pubSubMessage.Time); err != nil {
 		Logger.Print(err)
 		return false
