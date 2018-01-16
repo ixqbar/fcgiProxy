@@ -63,8 +63,12 @@ func (obj *Client) PipeSendMessage() {
 
 func (obj *Client) PipeReadMessage() {
 	qstr := Config.QueryString
-	if len(obj.request.URL.RawQuery) >= 0 {
-		qstr = fmt.Sprintf("%s&%s", qstr, Config.QueryString)
+	if len(qstr) > 0 {
+		if len(obj.request.URL.RawQuery) > 0 {
+			qstr = fmt.Sprintf("%s&%s", qstr, obj.request.URL.RawQuery)
+		}
+	} else {
+		qstr = obj.request.URL.RawQuery
 	}
 
 	Logger.Printf("client %s[%s] final query[%s]", obj.conn.RemoteAddr(), obj.UUID, qstr)

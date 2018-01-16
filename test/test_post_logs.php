@@ -63,7 +63,6 @@ function curl($url, $post_data = '', $max_loop=1, $ext_header = array()) {
     curl_setopt_array($ch, $options);
     $result = curl_exec($ch);
     if (false === $result || curl_errno($ch)) {
-        Logger::error('curl `' . $url . '` error `' . curl_error($ch) . '`');
         $max_loop++;
         if ($max_loop <= 3) {
             $result = curl($url, $post_data, $max_loop, $ext_header);

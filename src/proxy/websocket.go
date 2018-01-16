@@ -137,8 +137,12 @@ func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
 	remoteInfo := strings.Split(r.RemoteAddr, ":")
 
 	qstr := Config.QueryString
-	if len(r.URL.RawQuery) >= 0 {
-		qstr = fmt.Sprintf("%s&%s", qstr, Config.QueryString)
+	if len(qstr) > 0 {
+		if len(r.URL.RawQuery) > 0 {
+			qstr = fmt.Sprintf("%s&%s", qstr, r.URL.RawQuery)
+		}
+	} else {
+		qstr = r.URL.RawQuery
 	}
 
 	pubSubMessage := NewPubSubMessage(rv.Get("uuid"), remoteInfo[0], remoteInfo[1], qstr, r.Header.Get("User-Agent"))
