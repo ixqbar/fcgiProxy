@@ -47,7 +47,7 @@ func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) (bool) {
 		logMessage.Resource,
 		logMessage.Type,
 		logMessage.Content,
-		pubSubMessage.Time); err != nil {
+		pubSubMessage.Time / 1000); err != nil {
 		Logger.Print(err)
 		return false
 	}

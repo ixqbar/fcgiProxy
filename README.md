@@ -100,6 +100,7 @@ CREATE TABLE `access_logs` (
  `content` text NOT NULL,
  `time` int(11) NOT NULL,
  PRIMARY KEY (`id`),
+ KEY `type` (`type`),
  KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
