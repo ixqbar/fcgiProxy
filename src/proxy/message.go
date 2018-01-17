@@ -21,6 +21,7 @@ type PubSubMessage struct {
 	UserAgent string `json:"user_agent"`
 	Message interface{} `json:"message"`
 	Time int64 `json:"time"`
+	LogTryNum int `json:"log_try_num"`
 }
 
 func NewPubSubMessage(uuid, ip, port, vars, agent string) *PubSubMessage {
@@ -30,6 +31,7 @@ func NewPubSubMessage(uuid, ip, port, vars, agent string) *PubSubMessage {
 		Port:port,
 		Vars:vars,
 		UserAgent:agent,
+		LogTryNum:0,
 	}
 }
 

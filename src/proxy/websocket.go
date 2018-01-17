@@ -144,7 +144,7 @@ func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 	var logMessage LogMessage
 	if err := json.Unmarshal(message, &logMessage); err != nil {
-		Logger.Printf("client %s post error type logs content", r.RemoteAddr)
+		Logger.Printf("client %s post error type logs content %s", r.RemoteAddr, message)
 		return
 	}
 

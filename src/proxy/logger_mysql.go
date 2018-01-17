@@ -36,6 +36,8 @@ func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) (bool) {
 	stmtIns, err := obj.mysqlDao.db.Prepare("INSERT INTO access_logs(user_id,user_ip,user_agent,resource,type,content,time) VALUES (?,?,?,?,?,?,?)")
 	if err != nil {
 		Logger.Print(err)
+		obj.mysqlDao.Reconnect()
+		LoggerMessageRecord.RecordMessage(pubSubMessage);
 		return false
 	}
 	defer stmtIns.Close()

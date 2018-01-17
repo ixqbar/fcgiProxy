@@ -4,11 +4,13 @@ import (
 	"sync"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type mysqlDao struct {
 	sync.Mutex
 	name string
+	mysqlConfig *MysqlConfig
 	db *sql.DB
 }
 
@@ -17,6 +19,19 @@ func NewMysqlDao(name string, mysqlConfig MysqlConfig) *mysqlDao {
 		return nil
 	}
 
+	db := ConnectMysql(&mysqlConfig)
+	if db == nil {
+		return nil
+	}
+
+	return &mysqlDao{
+		name:name,
+		mysqlConfig:&mysqlConfig,
+		db:db,
+	}
+}
+
+func ConnectMysql(mysqlConfig *MysqlConfig) *sql.DB {
 	source := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		mysqlConfig.Username,
 		mysqlConfig.Password,
@@ -33,10 +48,11 @@ func NewMysqlDao(name string, mysqlConfig MysqlConfig) *mysqlDao {
 		return nil
 	}
 
-	return &mysqlDao{
-		name:name,
-		db:db,
-	}
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(20)
+	db.SetConnMaxLifetime(time.Duration(10) * time.Second)
+
+	return db
 }
 
 func (obj *mysqlDao) Close() {
@@ -45,4 +61,13 @@ func (obj *mysqlDao) Close() {
 	}
 
 	Logger.Printf("mysql db[%s] closed", obj.name)
+}
+
+func (obj *mysqlDao) Reconnect()  {
+	obj.Lock()
+	defer obj.Unlock()
+
+	Logger.Printf("mysql db[%s] try reconnect", obj.name)
+
+	obj.db = ConnectMysql(obj.mysqlConfig)
 }

@@ -45,6 +45,10 @@ func (obj *LogMessageRecord) Run() {
 }
 
 func (obj *LogMessageRecord) RecordMessage(pbMessage *PubSubMessage) {
+	if pbMessage.LogTryNum > 10 {
+		return
+	}
+	pbMessage.LogTryNum++
 	obj.message <- pbMessage
 }
 
