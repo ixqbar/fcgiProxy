@@ -97,9 +97,24 @@ func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Allow", "POST")
+		w.Header().Set("Cache-Control", "max-age=3600")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		requestAllowHeaders := r.Header.Get("Access-Control-Request-Headers")
+		if len(requestAllowHeaders) > 0 {
+			w.Header().Set("Access-Control-Allow-Headers", requestAllowHeaders)
+		}
+		w.Header().Set("Access-Control-Max-Age", "3600")
+		w.WriteHeader(204)
+		return
+	}
+
 	var responseContent = "fail"
 	defer func() {
 		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Access-Control-Allow-Origin", "*");
 		w.Write([]byte(responseContent))
 	}()
 
