@@ -1,41 +1,5 @@
 <?php
 
-
-function rc4($data, $pwd = 'hello') {
-    $key[] ="";
-    $box[] ="";
-    $cipher = "";
-
-    $pwd_length = strlen($pwd);
-    $data_length = strlen($data);
-
-    for ($i = 0; $i < 256; $i++) {
-        $key[$i] = ord($pwd[$i % $pwd_length]);
-        $box[$i] = $i;
-    }
-
-    for ($j = $i = 0; $i < 256; $i++) {
-        $j = ($j + $box[$i] + $key[$i]) % 256;
-        $tmp = $box[$i];
-        $box[$i] = $box[$j];
-        $box[$j] = $tmp;
-    }
-
-    for ($a = $j = $i = 0; $i < $data_length; $i++) {
-        $a = ($a + 1) % 256;
-        $j = ($j + $box[$a]) % 256;
-
-        $tmp = $box[$a];
-        $box[$a] = $box[$j];
-        $box[$j] = $tmp;
-
-        $k = $box[(($box[$a] + $box[$j]) % 256)];
-        $cipher .= chr(ord($data[$i]) ^ $k);
-    }
-
-    return $cipher;
-}
-
 function curl($url, $post_data = '', $max_loop=1, $ext_header = array()) {
     $ch = curl_init();
 
@@ -74,17 +38,20 @@ function curl($url, $post_data = '', $max_loop=1, $ext_header = array()) {
 }
 
 $content = [
-    'id'   => 123,
-    'res'  => 'http://127.0.0.1/cdn/game.png',
-    'type' => "res",
-    'data' => 'not found'
+    'noticeData' => [
+        'category' => 'notice',
+        'title'    => 'notice title',
+        'message'  => 'notice message',
+        'data'     => '',
+    ],
+    'noticeTime' => time(),
 ];
 
+echo json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+
 $result = curl(
-    'http://127.0.0.1:8899/logs?channel=haha',
-    rc4(json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
-    1,
-    ["Content-Type: application/octet-stream"]
+    'http://127.0.0.1:8899/push',
+    json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
 );
 
 echo $result . PHP_EOL;
