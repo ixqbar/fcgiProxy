@@ -222,8 +222,11 @@ func pushHttpHandle(w http.ResponseWriter, r *http.Request) {
 	if len(targetUUID) > 0 {
 		Clients.PushMessage(targetUUID, message)
 	} else {
+		targetUUID = "*"
 		Clients.BroadcastMessage(message)
 	}
+
+	Logger.Printf("client %s push message %s to %s", r.RemoteAddr, message, targetUUID)
 
 	responseContent = "ok"
 }
