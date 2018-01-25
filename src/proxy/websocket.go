@@ -58,7 +58,7 @@ func defaultHttpHandle(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "total: %d<br/>", Clients.num)
 }
 
-func proxyHttpHandle(w http.ResponseWriter, r *http.Request) {
+func sockHttpHandle(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		Logger.Print(err)
@@ -220,7 +220,9 @@ func pushHttpHandle(w http.ResponseWriter, r *http.Request) {
 	//pushMesage
 	targetUUID := rv.Get("uuid")
 	if len(targetUUID) > 0 {
-		Clients.PushMessage(targetUUID, message)
+		for _, v := range strings.Split(targetUUID, ",") {
+			Clients.PushMessage(v, message)
+		}
 	} else {
 		targetUUID = "*"
 		Clients.BroadcastMessage(message)
@@ -233,7 +235,7 @@ func pushHttpHandle(w http.ResponseWriter, r *http.Request) {
 func NewWebSocket() (*http.Server, chan int) {
 	http.HandleFunc("/", defaultHttpHandle)
 	http.HandleFunc("/favicon.ico", faviconHttpHandle)
-	http.HandleFunc("/sock", proxyHttpHandle)
+	http.HandleFunc("/sock", sockHttpHandle)
 	http.HandleFunc("/logs", logsHttpHandle)
 	http.HandleFunc("/push", pushHttpHandle)
 
