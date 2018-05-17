@@ -20,7 +20,7 @@ type FcgiRedisHandle struct {
 }
 
 func (obj *FcgiRedisHandle) Init() error {
-	obj.Initiation()
+	obj.Initiation(nil)
 
 	return nil
 }
@@ -46,6 +46,24 @@ func (obj *FcgiRedisHandle) Del(clientUUID string) error {
 			client.Close()
 		}
 	}
+
+	return nil
+}
+
+func (obj *FcgiRedisHandle) Ping(message string) (string, error)  {
+	if len(message) > 0 {
+		return message, nil
+	}
+
+	return "PONG", nil
+}
+
+func (obj *FcgiRedisHandle) Qpush(group, message string) (error)  {
+	if len(group) == 0 || len(message) == 0 {
+		return nil
+	}
+
+	go QpushMessage(group, message)
 
 	return nil
 }

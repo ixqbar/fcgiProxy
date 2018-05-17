@@ -3,8 +3,8 @@
 	<admin_server>0.0.0.0:6899</admin_server>
 	<!-- http[s] -->
 	<http_server>0.0.0.0:8899</http_server>
-	<http_ssl_cert>/Users/xingqiba/workspace/go/fcgiProxy/ssl/server.crt</http_ssl_cert>
-	<http_ssl_key>/Users/xingqiba/workspace/go/fcgiProxy/ssl/server.key</http_ssl_key>
+	<http_ssl_cert></http_ssl_cert>
+	<http_ssl_key></http_ssl_key>
 	<http_static_root>/Users/xingqiba/workspace/go/fcgiProxy</http_static_root>
 	<!-- fastcgi -->
 	<fcgi_server>0.0.0.0:9000</fcgi_server>
@@ -29,4 +29,10 @@
 			<database>zwj2</database>
 		</mysql>
 	</logger>
+	<proxy>
+		<server>socks://127.0.0.1:8016</server>
+	</proxy>
+	<qpush>
+		<device>*,{name},{code}</device>
+	</qpush>
 </config>

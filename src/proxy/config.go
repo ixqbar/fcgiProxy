@@ -8,7 +8,13 @@ import (
 	"strings"
 )
 
-type ProxyParams struct {
+const (
+	TProxyIsNone  = iota
+	TProxyIsSocks
+	TProxyIsHttp
+)
+
+type TProxyParams struct {
 	Key   string `xml:"key"`
 	Value string `xml:"value"`
 }
@@ -29,7 +35,7 @@ func (l *OrignList) ToString() string {
 	return strings.Join(*l, ",")
 }
 
-type MysqlConfig struct {
+type TMysqlConfig struct {
 	Ip       string `xml:"ip"`
 	Username string `xml:"username"`
 	Password string `xml:"password"`
@@ -37,19 +43,84 @@ type MysqlConfig struct {
 	Database string `xml:"database"`
 }
 
+type TProxyConfig struct {
+	Type    int
+	Address string
+}
+
+func (obj *TProxyConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var content string
+	if err := d.DecodeElement(&content, &start); err != nil {
+		return err
+	}
+
+	if len(content) == 0 {
+		obj.Type = TProxyIsNone
+		obj.Address = ""
+		return nil
+	}
+
+	if strings.Index(content, "socks://") >= 0 {
+		obj.Type = TProxyIsSocks
+		obj.Address = strings.Replace(content, "socks://", "", -1)
+		return nil
+	}
+
+	if strings.Index(content, "http://") >= 0 || strings.Index(content, "https://") >= 0 {
+		obj.Type = TProxyIsHttp
+		obj.Address = content
+		return nil
+	}
+
+	return errors.New(fmt.Sprintf("error proxy server %s", content))
+}
+
+type TQpushDevice struct {
+	Group     string
+	Name      string
+	Code      string
+	Sign      string
+	Available bool
+}
+
+func (obj *TQpushDevice) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var content string
+	if err := d.DecodeElement(&content, &start); err != nil {
+		return err
+	}
+
+	if strings.Index(content, ",") >= 0 {
+		deviceInfo := strings.Split(content, ",")
+		obj.Group = deviceInfo[0]
+		obj.Name = deviceInfo[1]
+		obj.Code = deviceInfo[2]
+		obj.Sign = ""
+		obj.Available = false
+		return nil
+	}
+
+	return errors.New(fmt.Sprintf("error qpush device %s", content))
+}
+
+func (obj *TQpushDevice) String() string {
+	return fmt.Sprintf("group:%s,name:%s,code:%s,sign:%s", obj.Group, obj.Name, obj.Code, obj.Sign)
+}
+
 type FConfig struct {
-	AdminServerAddress  string        `xml:"admin_server"`
-	HttpServerAddress   string        `xml:"http_server"`
-	HttpServerSSLCert   string        `xml:"http_ssl_cert"`
-	HttpServerSSLKey    string        `xml:"http_ssl_key"`
-	HttpStaticRoot      string        `xml:"http_static_root"`
-	FcgiServerAddress   string        `xml:"fcgi_server"`
-	ScriptFileName      string        `xml:"script_filename"`
-	QueryString         string        `xml:"query_string"`
-	HeaderParams        []ProxyParams `xml:"header_params>param"`
-	Origins             OrignList     `xml:"origins"`
-	LoggerMysqlConfig   MysqlConfig   `xml:"logger>mysql"`
-	LoggerRc4EncryptKey string        `xml:"logger>rc4_encrypt_key"`
+	AdminServerAddress  string          `xml:"admin_server"`
+	HttpServerAddress   string          `xml:"http_server"`
+	HttpServerSSLCert   string          `xml:"http_ssl_cert"`
+	HttpServerSSLKey    string          `xml:"http_ssl_key"`
+	HttpStaticRoot      string          `xml:"http_static_root"`
+	FcgiServerAddress   string          `xml:"fcgi_server"`
+	ScriptFileName      string          `xml:"script_filename"`
+	QueryString         string          `xml:"query_string"`
+	HeaderParams        []TProxyParams  `xml:"header_params>param"`
+	Origins             OrignList       `xml:"origins"`
+	LoggerMysqlConfig   TMysqlConfig    `xml:"logger>mysql"`
+	LoggerRc4EncryptKey string          `xml:"logger>rc4_encrypt_key"`
+	ProxyList           []TProxyConfig  `xml:"proxy>server"`
+	QpushDevices        []*TQpushDevice `xml:"qpush>device"`
 }
 
 var Config *FConfig
@@ -84,6 +155,11 @@ func ParseXmlConfig(path string) (*FConfig, error) {
 	}
 
 	err = xml.Unmarshal(data, &Config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = CheckDeviceSign()
 	if err != nil {
 		return nil, err
 	}

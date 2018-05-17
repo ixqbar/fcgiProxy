@@ -1,5 +1,5 @@
 
-### version 0.0.7
+### version 0.0.8
 
 ### description
 ```
@@ -50,18 +50,27 @@ fcgiProxy --config=config.xml
 			<database>logs</database>
 		</mysql>
 	</logger>
+	<proxy>
+        <server>socks://127.0.0.1:8016</server>
+    </proxy>
+    <qpush>
+        <device>{group},{name},{code}</device>
+    </qpush>
 </config>
 ```
 
 ### fcgi通过redis协议推送消息给客户端
 ```
-set {uuid} message   #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
-set * message        #给所有客户端推送消息
-number               #获取在线人数
-del *                #剔除所有在线客户端
-del {uuid}           #剔除指定在线客户端， uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
-subscribe channel       #订阅频道  系统默认频道*
-publish channel message #发布消息到指定频道
+ping
+ping {message}
+set {uuid} {message}        #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
+set * {message}             #给所有客户端推送消息
+number                      #获取在线人数
+del *                       #剔除所有在线客户端
+del {uuid}                  #剔除指定在线客户端， uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
+subscribe {channel}         #订阅频道  系统默认频道*
+publish {channel} {message} #发布消息到指定频道
+qpush {group} {message}     #qpush
 ```
 
 ### pub&sub
@@ -104,5 +113,10 @@ CREATE TABLE `access_logs` (
  KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
+
+### qpush
+* http://qpush.me/zh_cn/
+![](screenshot/qpush_1.png)
+![](screenshot/qpush_2.png)
 
 更多疑问请+qq群 233415606

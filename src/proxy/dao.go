@@ -10,11 +10,11 @@ import (
 type mysqlDao struct {
 	sync.Mutex
 	name string
-	mysqlConfig *MysqlConfig
+	mysqlConfig *TMysqlConfig
 	db *sql.DB
 }
 
-func NewMysqlDao(name string, mysqlConfig MysqlConfig) *mysqlDao {
+func NewMysqlDao(name string, mysqlConfig TMysqlConfig) *mysqlDao {
 	if len(mysqlConfig.Ip) == 0 || len(mysqlConfig.Database) == 0 {
 		return nil
 	}
@@ -31,7 +31,7 @@ func NewMysqlDao(name string, mysqlConfig MysqlConfig) *mysqlDao {
 	}
 }
 
-func ConnectMysql(mysqlConfig *MysqlConfig) *sql.DB {
+func ConnectMysql(mysqlConfig *TMysqlConfig) *sql.DB {
 	source := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		mysqlConfig.Username,
 		mysqlConfig.Password,
