@@ -1,5 +1,5 @@
 
-### version 0.0.8
+### version 0.0.9
 
 ### description
 ```
@@ -23,6 +23,7 @@ fcgiProxy --config=config.xml
 	<!-- ssl cert -->
 	<http_ssl_cert>/data/ssl/server.crt</http_ssl_cert>
 	<http_ssl_key>/data/ssl/server.key</http_ssl_key>
+	<http_rc4_key></http_rc4_key>
 	<!-- enable http static file path -->
 	<http_static_root>/data/resource</http_static_root>
 	<!-- fastcgi -->
@@ -63,13 +64,13 @@ fcgiProxy --config=config.xml
 ```
 ping
 ping {message}
-set {uuid} {message}        #给指定客户端推送消息  uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
-set * {message}             #给所有客户端推送消息
+set {uuid} {message}        #给指定客户端推送text消息  uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
+set * {message}             #给所有客户端推送text消息
 number                      #获取在线人数
 del *                       #剔除所有在线客户端
 del {uuid}                  #剔除指定在线客户端， uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
 subscribe {channel}         #订阅频道  系统默认频道*
-publish {channel} {message} #发布消息到指定频道
+publish {channel} {message} #发布text消息到指定频道
 qpush {group} {message}     #qpush
 ```
 
@@ -94,7 +95,7 @@ curl 'http://127.0.0.1:8899/?format=json'  #获取统计信息
 curl --data '{"id":1,"res":"hh","type":"request","data":"not found"}' 'http://127.0.0.1:8899/logs' #提交日志
 ```
 * http://xxx.xxx.xxx.xxx:pppp/
-* http://xxx.xxx.xxx.xxx:pppp/logs[?channel=推送频道，可选]
+* http://xxx.xxx.xxx.xxx:pppp/logs
 * http://xxx.xxx.xxx.xxx:pppp/res
 
 ### log table

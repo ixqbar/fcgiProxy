@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <config>
+	<!-- redis protocol server -->
 	<admin_server>0.0.0.0:6899</admin_server>
 	<!-- http[s] -->
 	<http_server>0.0.0.0:8899</http_server>
 	<http_ssl_cert></http_ssl_cert>
 	<http_ssl_key></http_ssl_key>
 	<http_static_root>/Users/xingqiba/workspace/go/fcgiProxy</http_static_root>
+	<http_rc4_key></http_rc4_key>
 	<!-- fastcgi -->
 	<fcgi_server>0.0.0.0:9000</fcgi_server>
 	<script_filename>/Users/xingqiba/workspace/go/fcgiProxy/test/proxy.php</script_filename>
@@ -13,10 +15,11 @@
 	<header_params>
 		<param>
 			<key>ProxyVersion</key>
-			<value>0.0.7</value>
+			<value>0.0.9</value>
 		</param>
 	</header_params>
 	<origins>*</origins>
+	<!-- logs http server -->
 	<logger>
 		<!-- empty is no encrypt -->
 		<rc4_encrypt_key>hello</rc4_encrypt_key>
@@ -29,6 +32,7 @@
 			<database>zwj2</database>
 		</mysql>
 	</logger>
+	<!-- qpush -->
 	<proxy>
 		<server>socks://127.0.0.1:8016</server>
 	</proxy>

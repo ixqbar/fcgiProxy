@@ -70,9 +70,9 @@ func (obj *FcgiRedisHandle) Qpush(group, message string) (error)  {
 
 func (obj *FcgiRedisHandle) Set(clientUUID string, message []byte) error {
 	if clientUUID == "*" {
-		Clients.BroadcastMessage(message)
+		Clients.BroadcastMessage(NewClientTextMessage(message))
 	} else {
-		Clients.PushMessage(clientUUID, message)
+		Clients.PushMessage(clientUUID, NewClientTextMessage(message))
 	}
 
 	return nil

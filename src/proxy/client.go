@@ -14,6 +14,11 @@ import (
 	"net/url"
 )
 
+type ClientMessage struct {
+	category int
+	data     []byte
+}
+
 type Client struct {
 	sync.Mutex
 	UUID          string
@@ -23,13 +28,32 @@ type Client struct {
 	over          chan bool
 	request       *http.Request
 	requestValues *url.Values
-	message       chan []byte
+	message       chan *ClientMessage
+}
+
+func NewClientTextMessage(message []byte) *ClientMessage {
+	return &ClientMessage{
+		category: websocket.TextMessage,
+		data:     message,
+	}
+}
+
+func NewClientBinaryMessage(message []byte) *ClientMessage {
+	return &ClientMessage{
+		category: websocket.BinaryMessage,
+		data:     message,
+	}
+}
+
+func NewClientMessage(category int, message []byte) *ClientMessage {
+	return &ClientMessage{
+		category: category,
+		data:     message,
+	}
 }
 
 func (obj *Client) PipeSendMessage() {
 	ticker := time.NewTicker(15 * time.Second)
-
-	Logger.Printf("client %s[%s] waiting for message send", obj.conn.RemoteAddr(), obj.UUID)
 
 	obj.conn.SetPongHandler(func(appData string) error {
 		Logger.Printf("client %s[%s] got pong message %s", obj.conn.RemoteAddr(), obj.UUID, appData)
@@ -51,7 +75,7 @@ func (obj *Client) PipeSendMessage() {
 				return
 			}
 
-			if err := obj.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			if err := obj.conn.WriteMessage(message.category, message.data); err != nil {
 				Logger.Print(err)
 				return
 			}
@@ -100,6 +124,11 @@ func (obj *Client) PipeReadMessage() {
 
 	var pubSubData []byte
 
+	frameMessageType := websocket.TextMessage
+	if len(Config.HttpRc4EncryptKey) > 0 {
+		frameMessageType = websocket.BinaryMessage
+	}
+
 	for {
 		messageType, messageContent, err := obj.conn.ReadMessage()
 		if err != nil {
@@ -107,17 +136,35 @@ func (obj *Client) PipeReadMessage() {
 			break
 		}
 
-		if messageType != websocket.TextMessage {
+		if messageType != frameMessageType {
 			Logger.Printf("client %s[%s] read err message type", obj.conn.RemoteAddr(), obj.UUID)
 			break
 		}
 
-		pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, string(messageContent))
-		pubSubData = pubSubMessage.Data()
+		if messageType == websocket.BinaryMessage {
+			if FcgiRedis.CanPublish() {
+				originMessage, err := Rc4Decrypt(messageContent, []byte(Config.HttpRc4EncryptKey))
+				if err != nil {
+					Logger.Printf("client %s[%s] decrypt message fail", obj.conn.RemoteAddr(), obj.UUID)
+					break
+				}
 
-		FcgiRedis.Publish("*", pubSubData)
-		if len(pubSubChannel) > 0 {
-			FcgiRedis.Publish(pubSubChannel, pubSubData)
+				pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, string(originMessage))
+				pubSubData = pubSubMessage.Data()
+
+				FcgiRedis.Publish("*", pubSubData)
+				if len(pubSubChannel) > 0 {
+					FcgiRedis.Publish(pubSubChannel, pubSubData)
+				}
+			}
+		} else if FcgiRedis.CanPublish() {
+			pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, string(messageContent))
+			pubSubData = pubSubMessage.Data()
+
+			FcgiRedis.Publish("*", pubSubData)
+			if len(pubSubChannel) > 0 {
+				FcgiRedis.Publish(pubSubChannel, pubSubData)
+			}
 		}
 
 		if body == nil || requestNoProxy == true {
@@ -126,7 +173,7 @@ func (obj *Client) PipeReadMessage() {
 
 		body.Reset(messageContent)
 
-		Logger.Printf("client %s[%s] request body [%s][%d]", obj.conn.RemoteAddr(), obj.UUID, string(messageContent), body.Len())
+		startTime := time.Now()
 
 		fcgi, err := fcgiclient.Dial("tcp", Config.FcgiServerAddress)
 		if err != nil {
@@ -149,17 +196,19 @@ func (obj *Client) PipeReadMessage() {
 			break
 		}
 
-		err = obj.PushMessage(content)
+		err = obj.PushMessage(NewClientMessage(frameMessageType, content))
 		if err != nil {
 			Logger.Printf("client %s[%s] response failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
 			break
 		}
+
+		Logger.Printf("client %s[%s] request success cost time %s", obj.conn.RemoteAddr(), obj.UUID, time.Since(startTime).String())
 	}
 }
 
-func (obj *Client) PushMessage(message []byte) error {
+func (obj *Client) PushMessage(clientMessage *ClientMessage) error {
 	select {
-	case obj.message <- message:
+	case obj.message <- clientMessage:
 	default:
 		return errors.New(fmt.Sprintf("push message to client %s[%s] failed", obj.conn.RemoteAddr(), obj.UUID))
 	}
@@ -205,7 +254,7 @@ func NewClient(uuid string, conn *websocket.Conn, r *http.Request, rv *url.Value
 		alive:         true,
 		request:       r,
 		requestValues: rv,
-		message:       make(chan []byte),
+		message:       make(chan *ClientMessage),
 	}
 }
 
@@ -234,7 +283,7 @@ func (obj *RequestClients) RemoveClient(uuid string) {
 	delete(obj.Clients, uuid)
 }
 
-func (obj *RequestClients) PushMessage(uuid string, message []byte) error {
+func (obj *RequestClients) PushMessage(uuid string, clientMessage *ClientMessage) error {
 	obj.Lock()
 	defer obj.Unlock()
 
@@ -242,15 +291,15 @@ func (obj *RequestClients) PushMessage(uuid string, message []byte) error {
 		return errors.New(fmt.Sprintf("not found client %s", uuid))
 	}
 
-	return obj.Clients[uuid].PushMessage(message)
+	return obj.Clients[uuid].PushMessage(clientMessage)
 }
 
-func (obj *RequestClients) BroadcastMessage(message []byte) error {
+func (obj *RequestClients) BroadcastMessage(clientMessage *ClientMessage) error {
 	obj.Lock()
 	defer obj.Unlock()
 
 	for _, val := range obj.Clients {
-		err := val.PushMessage(message)
+		err := val.PushMessage(clientMessage)
 		if err != nil {
 			Logger.Printf("broadcast message to %s failed %s", val.UUID, err)
 		}

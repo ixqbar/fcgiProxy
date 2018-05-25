@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"github.com/jonnywang/go-kits/redis"
-	"log"
 )
 
 type LogMessage struct {
@@ -58,7 +57,3 @@ func (obj *LogMessageRecord) Stop() {
 
 var Logger = redis.Logger
 var LoggerMessageRecord = NewLogMessageRecord()
-
-func init() {
-	redis.Logger.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-}
