@@ -17,8 +17,7 @@ type TQpushSignResponse struct {
 
 func CheckDeviceSign(deviceIndex int) error {
 	deviceInfo := Config.QpushDevices[deviceIndex]
-	maxLoop := 5
-	currentLoop := 0
+
 	url := "https://qpush.me/pusher/checkphone/"
 	qPushSignResponse := TQpushSignResponse{}
 
@@ -31,8 +30,8 @@ func CheckDeviceSign(deviceIndex int) error {
 
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded");
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36");
-	for currentLoop = 0; currentLoop < maxLoop; currentLoop++ {
-		client, err := MakeHttpClient(Config.ProxyConfigIndex)
+	for tryNum := 0; tryNum < MaxQpushTryNum; tryNum++ {
+		client, err := MakeHttpClient()
 		if err != nil {
 			Logger.Print(err)
 			continue
@@ -41,14 +40,12 @@ func CheckDeviceSign(deviceIndex int) error {
 		response, err := client.httpClient.Do(request)
 		if err != nil {
 			Logger.Print(err)
-			Config.RemoveProxyConfig(client.proxyIndex)
 			continue
 		}
 
 		responseBody, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			Logger.Print(err)
-			Config.RemoveProxyConfig(client.proxyIndex)
 			continue
 		}
 
@@ -57,19 +54,22 @@ func CheckDeviceSign(deviceIndex int) error {
 		err = json.Unmarshal(responseBody, &qPushSignResponse)
 		if err != nil {
 			Logger.Print(err)
-			Config.RemoveProxyConfig(client.proxyIndex)
 			continue
 		}
 
-		if len(qPushSignResponse.Sign) > 0 {
-			Config.QpushDevices[deviceIndex].Sign = qPushSignResponse.Sign
-			Config.QpushDevices[deviceIndex].Available = true
-			Config.ProxyConfigIndex = client.proxyIndex
-			Logger.Printf("qpush got sign %s success for %s[%s][%s]", qPushSignResponse.Sign, deviceInfo.Name, deviceInfo.Group, deviceInfo.Code)
-			return nil
-		} else {
-			Config.RemoveProxyConfig(client.proxyIndex)
+		if len(qPushSignResponse.Sign) == 0 {
+			continue
 		}
+
+		client.Success()
+		Config.QpushDevices[deviceIndex].Sign = qPushSignResponse.Sign
+		Config.QpushDevices[deviceIndex].Available = true
+		Logger.Printf("qpush got sign %s success for %s[%s][%s] by proxyServer %s",
+			qPushSignResponse.Sign, deviceInfo.Name, deviceInfo.Group, deviceInfo.Code,
+			client.proxyConfig.String(),
+		)
+
+		return nil
 	}
 
 	Logger.Printf("qpush got sign %v failed for %s[%s][%s]", qPushSignResponse, deviceInfo.Name, deviceInfo.Group, deviceInfo.Code)
@@ -82,8 +82,6 @@ func QpushMessage(group, message string) {
 		return
 	}
 
-	maxLoop := 5
-	currentLoop := 0
 	url := "https://qpush.me/pusher/push_site/"
 	for deviceIndex, deviceInfo := range Config.QpushDevices {
 		if deviceInfo.Group != group {
@@ -106,8 +104,8 @@ func QpushMessage(group, message string) {
 
 		request.Header.Set("Content-Type", "application/x-www-form-urlencoded");
 		request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36");
-		for currentLoop = 0; currentLoop < maxLoop; currentLoop++ {
-			client, err := MakeHttpClient(Config.ProxyConfigIndex)
+		for tryNum := 0; tryNum < MaxQpushTryNum; tryNum++ {
+			client, err := MakeHttpClient()
 			if err != nil {
 				Logger.Print(err)
 				continue
@@ -116,19 +114,21 @@ func QpushMessage(group, message string) {
 			response, err := client.httpClient.Do(request)
 			if err != nil {
 				Logger.Print(err)
-				Config.RemoveProxyConfig(client.proxyIndex)
 				continue
 			}
 
 			responseBody, err := ioutil.ReadAll(response.Body)
 			if err != nil {
 				Logger.Print(err)
-				Config.RemoveProxyConfig(client.proxyIndex)
 				continue
 			}
 
-			Config.ProxyConfigIndex = client.proxyIndex
-			Logger.Printf("qpush message %s to %s[%s][%s][%s] response %s", message, deviceInfo.Name, deviceInfo.Group, deviceInfo.Code, deviceInfo.Sign, responseBody)
+			client.Success()
+			Logger.Printf("qpush message %s to %s[%s][%s][%s] response %s by proxyServer %s",
+				message, deviceInfo.Name, deviceInfo.Group, deviceInfo.Code, deviceInfo.Sign, responseBody,
+				client.proxyConfig.String(),
+			)
+
 			break
 		}
 	}

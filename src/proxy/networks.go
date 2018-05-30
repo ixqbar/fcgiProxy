@@ -10,15 +10,21 @@ import (
 
 type THttpClient struct {
 	httpClient *http.Client
-	proxyIndex int
+	proxyConfig *TProxyConfig
 }
 
-func MakeHttpClient(index int) (*THttpClient, error) {
+func (obj *THttpClient) Success()  {
+	if obj.proxyConfig.Type == TProxyIsNone {
+		return
+	}
+
+	PushAvailableProxyPool(obj.proxyConfig)
+}
+
+func MakeHttpClient() (*THttpClient, error) {
 	var httpClient *http.Client
 
-	proxyConfig, proxyIndex := Config.GetOneProxyConfig(index)
-
-	Logger.Printf("select proxy server %s", proxyConfig.String())
+	proxyConfig := PopProxyPool()
 
 	switch proxyConfig.Type {
 	case TProxyIsHttp:
@@ -65,5 +71,5 @@ func MakeHttpClient(index int) (*THttpClient, error) {
 		break
 	}
 
-	return &THttpClient{httpClient, proxyIndex}, nil
+	return &THttpClient{httpClient, proxyConfig}, nil
 }

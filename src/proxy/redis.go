@@ -63,9 +63,7 @@ func (obj *FcgiRedisHandle) Rpush(key string, content []byte) (error)  {
 		return ERR_PARAMS
 	}
 
-	if key == "proxy" {
-		go AddNewProxyConfig(content)
-	}
+	go AddNewProxyConfig(content)
 
 	return nil
 }
