@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
+	"time"
+	"math/rand"
 )
 
 const (
@@ -46,6 +49,21 @@ type TMysqlConfig struct {
 type TProxyConfig struct {
 	Type    int
 	Address string
+	Time    int64
+	IsSys   bool
+}
+
+func (obj *TProxyConfig) String() string {
+	switch obj.Type {
+	case TProxyIsSocks:
+		return fmt.Sprintf("sock5://%s", obj.Address)
+	case TProxyIsHttp:
+		return fmt.Sprintf("http://%s", obj.Address)
+	case TProxyIsNone:
+		return fmt.Sprint("None")
+	}
+
+	return ""
 }
 
 func (obj *TProxyConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -57,18 +75,24 @@ func (obj *TProxyConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) er
 	if len(content) == 0 {
 		obj.Type = TProxyIsNone
 		obj.Address = ""
+		obj.Time = time.Now().Unix()
+		obj.IsSys = false
 		return nil
 	}
 
 	if strings.Index(content, "socks://") >= 0 {
 		obj.Type = TProxyIsSocks
 		obj.Address = strings.Replace(content, "socks://", "", -1)
+		obj.Time = time.Now().Unix()
+		obj.IsSys = true
 		return nil
 	}
 
 	if strings.Index(content, "http://") >= 0 || strings.Index(content, "https://") >= 0 {
 		obj.Type = TProxyIsHttp
 		obj.Address = content
+		obj.Time = time.Now().Unix()
+		obj.IsSys = true
 		return nil
 	}
 
@@ -107,6 +131,8 @@ func (obj *TQpushDevice) String() string {
 }
 
 type FConfig struct {
+	sync.Mutex
+	ProxyConfigIndex    int
 	AdminServerAddress  string          `xml:"admin_server"`
 	HttpServerAddress   string          `xml:"http_server"`
 	HttpServerSSLCert   string          `xml:"http_ssl_cert"`
@@ -122,6 +148,64 @@ type FConfig struct {
 	LoggerRc4EncryptKey string          `xml:"logger>rc4_encrypt_key"`
 	ProxyList           []TProxyConfig  `xml:"proxy>server"`
 	QpushDevices        []*TQpushDevice `xml:"qpush>device"`
+}
+
+func (obj *FConfig) ClearEmptyProxy() {
+	obj.Lock()
+	defer obj.Unlock()
+
+	obj.ProxyConfigIndex = -1
+
+	var tp []TProxyConfig
+	var currentTime = time.Now().Unix()
+	for _, v := range obj.ProxyList {
+		if v.IsSys == false && (v.Type == TProxyIsNone || v.Time+86400 <= currentTime) {
+			continue
+		}
+		tp = append(tp, v)
+	}
+
+	obj.ProxyList = tp
+}
+
+func (obj *FConfig) AddProxyConfig(category int, address string, port string) {
+	obj.Lock()
+	defer obj.Unlock()
+
+	obj.ProxyList = append(obj.ProxyList, TProxyConfig{category, fmt.Sprintf("%s:%s", address, port), time.Now().Unix(), false})
+}
+
+func (obj *FConfig) GetOneProxyConfig(index int) (TProxyConfig, int) {
+	obj.Lock()
+	defer obj.Unlock()
+
+	if len(obj.ProxyList) == 0 {
+		return TProxyConfig{TProxyIsNone, "", 0, false}, -1
+	}
+
+	proxyIndex := 0
+	if index >= 0 && index < len(obj.ProxyList) {
+		proxyIndex = index
+	} else {
+		proxyIndex = rand.Intn(len(obj.ProxyList))
+	}
+
+	return obj.ProxyList[proxyIndex], proxyIndex
+}
+
+func (obj *FConfig) RemoveProxyConfig(index int) {
+	obj.Lock()
+	defer obj.Unlock()
+
+	obj.ProxyConfigIndex = -1
+
+	if index < 0 || index >= len(obj.ProxyList) {
+		return
+	}
+
+	Logger.Printf("remove unavailable proxy config index %d, %s", index, obj.ProxyList[index].String())
+
+	obj.ProxyList = append(obj.ProxyList[:index], obj.ProxyList[index+1:]...)
 }
 
 var Config *FConfig
@@ -142,7 +226,9 @@ func ParseXmlConfig(path string) (*FConfig, error) {
 	}
 	defer f.Close()
 
-	Config = &FConfig{}
+	Config = &FConfig{
+		ProxyConfigIndex: -1,
+	}
 
 	data := make([]byte, n)
 
@@ -156,11 +242,6 @@ func ParseXmlConfig(path string) (*FConfig, error) {
 	}
 
 	err = xml.Unmarshal(data, &Config)
-	if err != nil {
-		return nil, err
-	}
-
-	err = CheckDeviceSign()
 	if err != nil {
 		return nil, err
 	}

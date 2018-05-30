@@ -5,23 +5,20 @@ import (
 	"net/url"
 	"time"
 	"net"
-	"math/rand"
 	"golang.org/x/net/proxy"
 )
 
-func GetOneProxyConfig() TProxyConfig {
-	if len(Config.ProxyList) == 0 {
-		return TProxyConfig{TProxyIsNone, ""}
-	}
-
-	proxyIndex := rand.Intn(len(Config.ProxyList))
-	return Config.ProxyList[proxyIndex]
+type THttpClient struct {
+	httpClient *http.Client
+	proxyIndex int
 }
 
-func MakeHttpClient() (*http.Client, error) {
+func MakeHttpClient(index int) (*THttpClient, error) {
 	var httpClient *http.Client
 
-	proxyConfig := GetOneProxyConfig()
+	proxyConfig, proxyIndex := Config.GetOneProxyConfig(index)
+
+	Logger.Printf("select proxy server %s", proxyConfig.String())
 
 	switch proxyConfig.Type {
 	case TProxyIsHttp:
@@ -43,8 +40,8 @@ func MakeHttpClient() (*http.Client, error) {
 			proxyConfig.Address,
 			nil,
 			&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
+				Timeout:   10 * time.Second,
+				KeepAlive: 10 * time.Second,
 			},
 		)
 
@@ -68,5 +65,5 @@ func MakeHttpClient() (*http.Client, error) {
 		break
 	}
 
-	return httpClient, nil
+	return &THttpClient{httpClient, proxyIndex}, nil
 }

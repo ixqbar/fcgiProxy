@@ -58,6 +58,18 @@ func (obj *FcgiRedisHandle) Ping(message string) (string, error)  {
 	return "PONG", nil
 }
 
+func (obj *FcgiRedisHandle) Rpush(key string, content []byte) (error)  {
+	if len(key) == 0 || len(content) == 0 {
+		return ERR_PARAMS
+	}
+
+	if key == "proxy" {
+		go AddNewProxyConfig(content)
+	}
+
+	return nil
+}
+
 func (obj *FcgiRedisHandle) Qpush(group, message string) (error)  {
 	if len(group) == 0 || len(message) == 0 {
 		return nil
