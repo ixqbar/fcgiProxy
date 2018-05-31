@@ -13,25 +13,26 @@ type TProxyItem struct {
 	Time     int64  `json:"time"`
 }
 
-var ProxyPool = make(chan *TProxyConfig, MaxPoolSize)
+var DefaultProxyPool = make(chan *TProxyConfig, MaxPoolSize)
 var AvailableProxyPool = make(chan *TProxyConfig, MaxPoolSize)
 
-func PushProxyPool(proxyConfig *TProxyConfig) {
-	if len(ProxyPool) == MaxPoolSize {
-		Logger.Printf("add proxy to full default pool fail %v", proxyConfig.String())
-		return
+func AddProxyConfigToDefaultProxyPool(proxyConfig *TProxyConfig) {
+	if len(DefaultProxyPool) == MaxPoolSize {
+		Logger.Printf("add proxy to full default pool %v", proxyConfig.String())
+		tmpProxyConf := <- DefaultProxyPool
+		Logger.Printf("discard proxy from default pool %v", tmpProxyConf.String())
 	}
 
-	Logger.Printf("will proxy to default pool %v,now default proxy pool size %d", proxyConfig.String(), len(ProxyPool))
-	ProxyPool <- proxyConfig
-	Logger.Printf("add proxy to default pool success %v,now default proxy pool size %d", proxyConfig.String(), len(ProxyPool))
+	Logger.Printf("will proxy to default pool %v,now default proxy pool size %d", proxyConfig.String(), len(DefaultProxyPool))
+	DefaultProxyPool <- proxyConfig
+	Logger.Printf("add proxy to default pool success %v,now default proxy pool size %d", proxyConfig.String(), len(DefaultProxyPool))
 }
 
-func PushAvailableProxyPool(proxyConfig *TProxyConfig) {
+func AddProxyConfigToAvailableProxyPool(proxyConfig *TProxyConfig) {
 	if len(AvailableProxyPool) == MaxPoolSize {
-		Logger.Printf("add proxy to full available pool fail %v", proxyConfig.String())
-		PushProxyPool(proxyConfig)
-		return
+		Logger.Printf("add proxy to full available pool %v", proxyConfig.String())
+		tmpProxyConf := <- AvailableProxyPool
+		Logger.Printf("discard proxy from available pool %v", tmpProxyConf.String())
 	}
 
 	Logger.Printf("will proxy to available pool %v,now available proxy pool size %d", proxyConfig.String(), len(AvailableProxyPool))
@@ -39,37 +40,29 @@ func PushAvailableProxyPool(proxyConfig *TProxyConfig) {
 	Logger.Printf("add proxy to available pool success %v,now available proxy pool size %d", proxyConfig.String(), len(AvailableProxyPool))
 }
 
-func PopProxyPool() *TProxyConfig {
-	proxyConfig := PopAvailableProxyPool()
-	if proxyConfig != nil {
-		return proxyConfig
-	}
-
-	if len(ProxyPool) == 0 {
-		for _, v := range Config.ProxyList {
-			if v.Type != TProxyIsNone {
-				PushProxyPool(&v)
-			}
-		}
-	}
-
-	select {
-	case proxyConfig := <-ProxyPool:
-		Logger.Printf("get proxy from default pool success %v,now default proxy pool size %d", proxyConfig.String(), len(ProxyPool))
-		return proxyConfig
-	default:
-		Logger.Print("get proxy from default pool fail")
-		return &TProxyConfig{TProxyIsNone, ""}
-	}
-}
-
-func PopAvailableProxyPool() *TProxyConfig {
+func GetOneProxyConfigFromProxyPool() *TProxyConfig {
 	select {
 	case proxyConfig := <-AvailableProxyPool:
 		Logger.Printf("get proxy from available pool success %v,now available proxy pool size %d", proxyConfig.String(), len(AvailableProxyPool))
 		return proxyConfig
 	default:
-		return nil
+	}
+
+	if len(DefaultProxyPool) == 0 {
+		for _, v := range Config.ProxyList {
+			if v.Type != TProxyIsNone {
+				AddProxyConfigToDefaultProxyPool(&v)
+			}
+		}
+	}
+
+	select {
+	case proxyConfig := <-DefaultProxyPool:
+		Logger.Printf("get proxy from default pool success %v,now default proxy pool size %d", proxyConfig.String(), len(DefaultProxyPool))
+		return proxyConfig
+	default:
+		Logger.Print("get proxy from default pool fail")
+		return &TProxyConfig{TProxyIsNone, ""}
 	}
 }
 
@@ -85,12 +78,12 @@ func AddNewProxyConfig(content []byte) {
 
 	switch proxyItem.Category {
 	case "socks5":
-		PushProxyPool(&TProxyConfig{
+		AddProxyConfigToDefaultProxyPool(&TProxyConfig{
 			TProxyIsSocks,
 			fmt.Sprintf("%s:%s", proxyItem.Address, proxyItem.Port),
 		})
 	case "http":
-		PushProxyPool(&TProxyConfig{
+		AddProxyConfigToDefaultProxyPool(&TProxyConfig{
 			TProxyIsHttp,
 			fmt.Sprintf("%s:%s", proxyItem.Address, proxyItem.Port),
 		})

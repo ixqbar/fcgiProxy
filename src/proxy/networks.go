@@ -18,13 +18,13 @@ func (obj *THttpClient) Success()  {
 		return
 	}
 
-	PushAvailableProxyPool(obj.proxyConfig)
+	AddProxyConfigToAvailableProxyPool(obj.proxyConfig)
 }
 
 func MakeHttpClient() (*THttpClient, error) {
 	var httpClient *http.Client
 
-	proxyConfig := PopProxyPool()
+	proxyConfig := GetOneProxyConfigFromProxyPool()
 
 	switch proxyConfig.Type {
 	case TProxyIsHttp:
