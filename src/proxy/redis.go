@@ -78,11 +78,22 @@ func (obj *FcgiRedisHandle) Qpush(group, message string) (error)  {
 	return nil
 }
 
-func (obj *FcgiRedisHandle) Set(clientUUID string, message []byte) error {
-	if clientUUID == "*" {
-		Clients.BroadcastMessage(NewClientTextMessage(message))
+func (obj *FcgiRedisHandle) Setex(clientUUID string, messageType int, message []byte) error {
+	return obj.Set(clientUUID, message, messageType)
+}
+
+func (obj *FcgiRedisHandle) Set(clientUUID string, message []byte, messageType int) error {
+	var clientMessage *ClientMessage;
+	if messageType == 0 {
+		clientMessage = NewClientTextMessage(message)
 	} else {
-		Clients.PushMessage(clientUUID, NewClientTextMessage(message))
+		clientMessage = NewClientBinaryMessage(message)
+	}
+
+	if clientUUID == "*" {
+		Clients.BroadcastMessage(clientMessage)
+	} else {
+		Clients.PushMessage(clientUUID, clientMessage)
 	}
 
 	return nil
