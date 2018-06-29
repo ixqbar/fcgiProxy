@@ -125,7 +125,6 @@ type FConfig struct {
 	HttpServerSSLCert   string          `xml:"http_ssl_cert"`
 	HttpServerSSLKey    string          `xml:"http_ssl_key"`
 	HttpStaticRoot      string          `xml:"http_static_root"`
-	HttpRc4EncryptKey   string          `xml:"http_rc4_key"`
 	FcgiServerAddress   string          `xml:"fcgi_server"`
 	ScriptFileName      string          `xml:"script_filename"`
 	QueryString         string          `xml:"query_string"`

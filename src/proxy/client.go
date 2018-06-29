@@ -124,11 +124,6 @@ func (obj *Client) PipeReadMessage() {
 
 	var pubSubData []byte
 
-	frameMessageType := websocket.TextMessage
-	if len(Config.HttpRc4EncryptKey) > 0 {
-		frameMessageType = websocket.BinaryMessage
-	}
-
 	for {
 		messageType, messageContent, err := obj.conn.ReadMessage()
 		if err != nil {
@@ -136,20 +131,9 @@ func (obj *Client) PipeReadMessage() {
 			break
 		}
 
-		if messageType != frameMessageType {
-			Logger.Printf("client %s[%s] read err message type", obj.conn.RemoteAddr(), obj.UUID)
-			break
-		}
-
 		if messageType == websocket.BinaryMessage {
 			if FcgiRedis.CanPublish() {
-				originMessage, err := Rc4Decrypt(messageContent, []byte(Config.HttpRc4EncryptKey))
-				if err != nil {
-					Logger.Printf("client %s[%s] decrypt message fail", obj.conn.RemoteAddr(), obj.UUID)
-					break
-				}
-
-				pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, string(originMessage))
+				pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, messageContent)
 				pubSubData = pubSubMessage.Data()
 
 				FcgiRedis.Publish("*", pubSubData)
@@ -196,7 +180,7 @@ func (obj *Client) PipeReadMessage() {
 			break
 		}
 
-		err = obj.PushMessage(NewClientMessage(frameMessageType, content))
+		err = obj.PushMessage(NewClientMessage(messageType, content))
 		if err != nil {
 			Logger.Printf("client %s[%s] response failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
 			break

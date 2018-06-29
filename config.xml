@@ -7,7 +7,6 @@
 	<http_ssl_cert></http_ssl_cert>
 	<http_ssl_key></http_ssl_key>
 	<http_static_root>/Users/xingqiba/workspace/go/fcgiProxy</http_static_root>
-	<http_rc4_key></http_rc4_key>
 	<!-- fastcgi -->
 	<fcgi_server>0.0.0.0:9000</fcgi_server>
 	<script_filename>/Users/xingqiba/workspace/go/fcgiProxy/test/proxy.php</script_filename>
