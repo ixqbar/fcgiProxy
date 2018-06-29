@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"github.com/google/uuid"
 )
 
 var (
@@ -35,6 +36,10 @@ func (obj *FcgiRedisHandle) Version() (string, error) {
 
 func (obj *FcgiRedisHandle) Number() (int, error) {
 	return Clients.Number(), nil
+}
+
+func (obj *FcgiRedisHandle) Uuid() (string, error) {
+	return uuid.New().String(), nil
 }
 
 func (obj *FcgiRedisHandle) Del(clientUUID string) error {

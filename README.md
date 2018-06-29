@@ -1,5 +1,5 @@
 
-### version 0.0.9
+### version 0.1.0
 
 ### description
 ```
@@ -29,7 +29,7 @@ fcgiProxy --config=config.xml
     <!-- fastcgi -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
     <script_filename>/Users/xingqiba/workspace/php/zwj2-beta/zwj2/app/src/game_server/test/proxy.php</script_filename>
-    <query_string><![CDATA[name=xingqiba&version=0.0.9]]></query_string>
+    <query_string><![CDATA[name=xingqiba&version=0.1.0]]></query_string>
     <header_params>
         <param>
             <key>ProxyVersion</key>
