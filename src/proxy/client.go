@@ -60,18 +60,25 @@ func (obj *Client) PipeSendMessage() {
 		return obj.conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 	})
 
-	defer ticker.Stop()
+	defer func() {
+		ticker.Stop()
+		Logger.Printf("client %s[%s] pipe send message is end", obj.conn.RemoteAddr(), obj.UUID)
+	}()
 
 	for {
 		select {
 		case <-ticker.C:
 			if err := obj.conn.WriteMessage(websocket.PingMessage, []byte("PING")); err != nil {
+				Logger.Print(err)
 				return
 			}
 			Logger.Printf("client %s[%s] send ping message PING", obj.conn.RemoteAddr(), obj.UUID)
 		case message, ok := <-obj.message:
 			if !ok {
-				obj.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				err := obj.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					Logger.Print(err)
+				}
 				return
 			}
 
