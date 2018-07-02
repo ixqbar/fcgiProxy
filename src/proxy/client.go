@@ -138,18 +138,8 @@ func (obj *Client) PipeReadMessage() {
 			break
 		}
 
-		if messageType == websocket.BinaryMessage {
-			if FcgiRedis.CanPublish() {
-				pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, messageContent)
-				pubSubData = pubSubMessage.Data()
-
-				FcgiRedis.Publish("*", pubSubData)
-				if len(pubSubChannel) > 0 {
-					FcgiRedis.Publish(pubSubChannel, pubSubData)
-				}
-			}
-		} else if FcgiRedis.CanPublish() {
-			pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, string(messageContent))
+		if FcgiRedis.CanPublish() {
+			pubSubMessage.UpdateMessage(PubSubMessageTypeIsProxy, messageContent)
 			pubSubData = pubSubMessage.Data()
 
 			FcgiRedis.Publish("*", pubSubData)
