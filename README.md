@@ -28,7 +28,7 @@ fcgiProxy --config=config.xml
     <http_static_root>/data/resource</http_static_root>
     <!-- fastcgi -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
-    <script_filename>/Users/xingqiba/workspace/php/zwj2-beta/zwj2/app/src/game_server/test/proxy.php</script_filename>
+    <script_filename>/Users/xingqiba/workspace/php/gateway.php</script_filename>
     <query_string><![CDATA[name=xingqiba&version=0.1.1]]></query_string>
     <header_params>
         <param>
