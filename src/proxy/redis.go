@@ -83,6 +83,15 @@ func (obj *FcgiRedisHandle) Qpush(group, message string) (error)  {
 	return nil
 }
 
+func (obj *FcgiRedisHandle) Exists(clientUUID string) (int, error) {
+	if Clients.GetClient(clientUUID) != nil {
+		return 1, nil
+	}
+
+	return 0, nil
+}
+
+
 func (obj *FcgiRedisHandle) Setex(clientUUID string, messageType int, message []byte) error {
 	return obj.Set(clientUUID, message, messageType)
 }
