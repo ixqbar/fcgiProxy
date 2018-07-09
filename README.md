@@ -32,8 +32,8 @@ fcgiProxy --config=config.xml
     <query_string><![CDATA[name=xingqiba&version=0.1.1]]></query_string>
     <header_params>
         <param>
-            <key>ProxyVersion</key>
-            <value>0.0.9</value>
+            <key>FcgiVersion</key>
+            <value>0.1.1</value>
         </param>
     </header_params>
     <!-- allow websocket origins to access -->
