@@ -14,6 +14,11 @@ import (
 	"net/url"
 )
 
+const (
+	MessageToRequestClient = iota
+	MessageToMonitorClient
+)
+
 type ClientMessage struct {
 	category int
 	data     []byte
@@ -21,7 +26,8 @@ type ClientMessage struct {
 
 type Client struct {
 	sync.Mutex
-	UUID          string
+	category      int
+	uuid          string
 	conn          *websocket.Conn
 	joinTime      int64
 	alive         bool
@@ -56,13 +62,13 @@ func (obj *Client) PipeSendMessage() {
 	ticker := time.NewTicker(15 * time.Second)
 
 	obj.conn.SetPongHandler(func(appData string) error {
-		Logger.Printf("client %s[%s] got pong message %s", obj.conn.RemoteAddr(), obj.UUID, appData)
+		Logger.Printf("client %s[%s] got pong message %s", obj.conn.RemoteAddr(), obj.uuid, appData)
 		return obj.conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 	})
 
 	defer func() {
 		ticker.Stop()
-		Logger.Printf("client %s[%s] pipe send message is end", obj.conn.RemoteAddr(), obj.UUID)
+		Logger.Printf("client %s[%s] pipe send message is end", obj.conn.RemoteAddr(), obj.uuid)
 	}()
 
 	for {
@@ -72,7 +78,7 @@ func (obj *Client) PipeSendMessage() {
 				Logger.Print(err)
 				return
 			}
-			Logger.Printf("client %s[%s] send ping message PING", obj.conn.RemoteAddr(), obj.UUID)
+			Logger.Printf("client %s[%s] send ping message PING", obj.conn.RemoteAddr(), obj.uuid)
 		case message, ok := <-obj.message:
 			if !ok {
 				err := obj.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -89,7 +95,7 @@ func (obj *Client) PipeSendMessage() {
 		}
 	}
 
-	Logger.Printf("client %s[%s] send message end", obj.conn.RemoteAddr(), obj.UUID)
+	Logger.Printf("client %s[%s] send message end", obj.conn.RemoteAddr(), obj.uuid)
 }
 
 func (obj *Client) PipeReadMessage() {
@@ -102,7 +108,7 @@ func (obj *Client) PipeReadMessage() {
 		qstr = obj.request.URL.RawQuery
 	}
 
-	Logger.Printf("client %s[%s] final query[%s]", obj.conn.RemoteAddr(), obj.UUID, qstr)
+	Logger.Printf("client %s[%s] final query[%s]", obj.conn.RemoteAddr(), obj.uuid, qstr)
 
 	var env map[string]string
 	var body *bytes.Reader
@@ -120,21 +126,21 @@ func (obj *Client) PipeReadMessage() {
 
 		env["REMOTE_ADDR"] = remoteInfo[0]
 		env["REMOTE_PORT"] = remoteInfo[1]
-		env["PROXY_UUID"] = obj.UUID
+		env["PROXY_UUID"] = obj.uuid
 
 		body = bytes.NewReader(nil)
 	}
 
 	requestNoProxy := IsFalse(obj.requestValues.Get("proxy"))
 	pubSubChannel := obj.requestValues.Get("channel")
-	pubSubMessage := NewPubSubMessage(obj.UUID, remoteInfo[0], remoteInfo[1], qstr, obj.request.Header.Get("User-Agent"))
+	pubSubMessage := NewPubSubMessage(obj.uuid, remoteInfo[0], remoteInfo[1], qstr, obj.request.Header.Get("User-Agent"))
 
 	var pubSubData []byte
 
 	for {
 		messageType, messageContent, err := obj.conn.ReadMessage()
 		if err != nil {
-			Logger.Printf("client %s[%s] read err message failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
+			Logger.Printf("client %s[%s] read err message failed %s", obj.conn.RemoteAddr(), obj.uuid, err)
 			break
 		}
 
@@ -164,7 +170,7 @@ func (obj *Client) PipeReadMessage() {
 
 		resp, err := fcgi.Post(env, "application/octet-stream", body, body.Len())
 		if err != nil {
-			Logger.Printf("client %s[%s] read fcgi response failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
+			Logger.Printf("client %s[%s] read fcgi response failed %s", obj.conn.RemoteAddr(), obj.uuid, err)
 			fcgi.Close()
 			break
 		}
@@ -173,17 +179,17 @@ func (obj *Client) PipeReadMessage() {
 		fcgi.Close()
 
 		if err != nil {
-			Logger.Printf("client %s[%s] read fcgi response failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
+			Logger.Printf("client %s[%s] read fcgi response failed %s", obj.conn.RemoteAddr(), obj.uuid, err)
 			break
 		}
 
 		err = obj.PushMessage(NewClientMessage(messageType, content))
 		if err != nil {
-			Logger.Printf("client %s[%s] response failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
+			Logger.Printf("client %s[%s] response failed %s", obj.conn.RemoteAddr(), obj.uuid, err)
 			break
 		}
 
-		Logger.Printf("client %s[%s] request success cost time %s", obj.conn.RemoteAddr(), obj.UUID, time.Since(startTime).String())
+		Logger.Printf("client %s[%s] request success cost time %s", obj.conn.RemoteAddr(), obj.uuid, time.Since(startTime).String())
 	}
 }
 
@@ -191,7 +197,7 @@ func (obj *Client) PushMessage(clientMessage *ClientMessage) error {
 	select {
 	case obj.message <- clientMessage:
 	default:
-		return errors.New(fmt.Sprintf("push message to client %s[%s] failed", obj.conn.RemoteAddr(), obj.UUID))
+		return errors.New(fmt.Sprintf("push message to client %s[%s] failed", obj.conn.RemoteAddr(), obj.uuid))
 	}
 
 	return nil
@@ -203,7 +209,7 @@ func (obj *Client) Close() {
 
 	err := obj.conn.SetReadDeadline(time.Now())
 	if err != nil {
-		Logger.Printf("client %s[%s] SetReadDeadline failed %s", obj.conn.RemoteAddr(), obj.UUID, err)
+		Logger.Printf("client %s[%s] SetReadDeadline failed %s", obj.conn.RemoteAddr(), obj.uuid, err)
 	}
 	obj.alive = false
 	<-obj.over
@@ -226,9 +232,10 @@ type RequestClients struct {
 
 var Clients = NewRequestClients()
 
-func NewClient(uuid string, conn *websocket.Conn, r *http.Request, rv *url.Values) *Client {
+func NewClient(category int, uuid string, conn *websocket.Conn, r *http.Request, rv *url.Values) *Client {
 	return &Client{
-		UUID:          uuid,
+		category: category,
+		uuid:          uuid,
 		conn:          conn,
 		joinTime:      time.Now().Unix(),
 		over:          make(chan bool),
@@ -245,12 +252,12 @@ func NewRequestClients() *RequestClients {
 	}
 }
 
-func (obj *RequestClients) AddNewClient(uuid string, conn *websocket.Conn, r *http.Request, rv *url.Values) *Client {
+func (obj *RequestClients) AddNewClient(category int, uuid string, conn *websocket.Conn, r *http.Request, rv *url.Values) *Client {
 	obj.Lock()
 	defer obj.Unlock()
 
 	obj.num++
-	obj.Clients[uuid] = NewClient(uuid, conn, r, rv)
+	obj.Clients[uuid] = NewClient(category, uuid, conn, r, rv)
 
 	return obj.Clients[uuid]
 }
@@ -275,14 +282,18 @@ func (obj *RequestClients) PushMessage(uuid string, clientMessage *ClientMessage
 	return obj.Clients[uuid].PushMessage(clientMessage)
 }
 
-func (obj *RequestClients) BroadcastMessage(clientMessage *ClientMessage) error {
+func (obj *RequestClients) BroadcastMessage(clientMessage *ClientMessage, clientCategory int) error {
 	obj.Lock()
 	defer obj.Unlock()
 
 	for _, val := range obj.Clients {
+		if val.category != clientCategory {
+			continue
+		}
+
 		err := val.PushMessage(clientMessage)
 		if err != nil {
-			Logger.Printf("broadcast message to %s failed %s", val.UUID, err)
+			Logger.Printf("broadcast message to %s failed %s", val.uuid, err)
 		}
 	}
 

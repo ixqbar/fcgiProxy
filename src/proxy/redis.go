@@ -91,6 +91,24 @@ func (obj *FcgiRedisHandle) Exists(clientUUID string) (int, error) {
 	return 0, nil
 }
 
+func (obj *FcgiRedisHandle) Npush(clientUUID string, message []byte, messageType int) error {
+	var clientMessage *ClientMessage;
+	if messageType == 0 {
+		clientMessage = NewClientTextMessage(message)
+	} else {
+		clientMessage = NewClientBinaryMessage(message)
+	}
+
+	if clientUUID == "*" {
+		Clients.BroadcastMessage(clientMessage, MessageToMonitorClient)
+	} else {
+		Clients.PushMessage(clientUUID, clientMessage)
+	}
+
+	return nil
+}
+
+
 
 func (obj *FcgiRedisHandle) Setex(clientUUID string, messageType int, message []byte) error {
 	return obj.Set(clientUUID, message, messageType)
@@ -105,7 +123,7 @@ func (obj *FcgiRedisHandle) Set(clientUUID string, message []byte, messageType i
 	}
 
 	if clientUUID == "*" {
-		Clients.BroadcastMessage(clientMessage)
+		Clients.BroadcastMessage(clientMessage, MessageToRequestClient)
 	} else {
 		Clients.PushMessage(clientUUID, clientMessage)
 	}

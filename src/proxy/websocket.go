@@ -78,6 +78,11 @@ func sockHttpHandle(w http.ResponseWriter, r *http.Request) {
 		clientUUID = uuid.New().String()
 	}
 
+	clientCategory := MessageToRequestClient
+	if rv.Get("monitor") == "1" {
+		clientCategory = MessageToMonitorClient
+	}
+
 	Logger.Printf("client %s[%s] connected with query[%s]", conn.RemoteAddr(), clientUUID, r.URL.RawQuery)
 
 	client := Clients.GetClient(clientUUID)
@@ -85,7 +90,7 @@ func sockHttpHandle(w http.ResponseWriter, r *http.Request) {
 		client.Close()
 	}
 
-	client = Clients.AddNewClient(clientUUID, conn, r, &rv)
+	client = Clients.AddNewClient(clientCategory, clientUUID, conn, r, &rv)
 
 	defer func() {
 		Clients.RemoveClient(clientUUID)

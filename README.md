@@ -1,5 +1,5 @@
 
-### version 0.1.1
+### version 0.1.2
 
 ### description
 ```
@@ -29,11 +29,11 @@ fcgiProxy --config=config.xml
     <!-- fastcgi -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
     <script_filename>/Users/xingqiba/workspace/php/gateway.php</script_filename>
-    <query_string><![CDATA[name=xingqiba&version=0.1.1]]></query_string>
+    <query_string><![CDATA[name=xingqiba&version=0.1.2]]></query_string>
     <header_params>
         <param>
             <key>FcgiVersion</key>
-            <value>0.1.1</value>
+            <value>0.1.2</value>
         </param>
     </header_params>
     <!-- allow websocket origins to access -->
@@ -80,6 +80,7 @@ publish {channel} {message} #发布text消息到指定频道
 qpush {group} {message}     #qpush
 rpush {nothing} {proxy_server_content}  #推送用于qpush的代理配置
 exists {uuid}               #确认客户端uuid是否在线
+npush * {message}           #推送消息给监控 https://github.com/jonnywang/ctips
 ```
 *rpush用于接收爬虫扫到的代理服务器，用于qpush推送使用
 *rpush对应爬虫可以参考 https://github.com/jonnywang/sockslistnet
