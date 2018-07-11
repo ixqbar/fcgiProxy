@@ -14,8 +14,14 @@ var messageOnce sync.Once
 
 func LoggerMessageDao() *messageDao {
 	messageOnce.Do(func() {
+		var mysqlDaoInstance *mysqlDao = nil
+
+		if len(Config.LoggerMysqlConfig.Ip) > 0 && len(Config.LoggerMysqlConfig.Username) > 0 {
+			mysqlDaoInstance = NewMysqlDao("logger", Config.LoggerMysqlConfig)
+		}
+
 		messageMysqlDao = &messageDao{
-			mysqlDao:NewMysqlDao("logger", Config.LoggerMysqlConfig),
+			mysqlDao: mysqlDaoInstance,
 		}
 	})
 

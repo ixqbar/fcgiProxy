@@ -175,7 +175,10 @@ func NewWebSocket() (*http.Server, chan int) {
 	http.HandleFunc("/", defaultHttpHandle)
 	http.HandleFunc("/favicon.ico", faviconHttpHandle)
 	http.HandleFunc("/sock", sockHttpHandle)
-	http.HandleFunc("/logs", logsHttpHandle)
+
+	if len(Config.LoggerMysqlConfig.Ip) > 0 && len(Config.LoggerMysqlConfig.Username) > 0 {
+		http.HandleFunc("/logs", logsHttpHandle)
+	}
 
 	if len(Config.HttpStaticRoot) > 0 {
 		http.Handle("/res", http.StripPrefix("/res", http.FileServer(http.Dir(Config.HttpStaticRoot))))
