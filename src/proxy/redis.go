@@ -55,7 +55,7 @@ func (obj *FcgiRedisHandle) Del(clientUUID string) error {
 	return nil
 }
 
-func (obj *FcgiRedisHandle) Ping(message string) (string, error)  {
+func (obj *FcgiRedisHandle) Ping(message string) (string, error) {
 	if len(message) > 0 {
 		return message, nil
 	}
@@ -63,7 +63,7 @@ func (obj *FcgiRedisHandle) Ping(message string) (string, error)  {
 	return "PONG", nil
 }
 
-func (obj *FcgiRedisHandle) Rpush(key string, content []byte) (error)  {
+func (obj *FcgiRedisHandle) Rpush(key string, content []byte) (error) {
 	if len(key) == 0 || len(content) == 0 {
 		return ERR_PARAMS
 	}
@@ -73,7 +73,7 @@ func (obj *FcgiRedisHandle) Rpush(key string, content []byte) (error)  {
 	return nil
 }
 
-func (obj *FcgiRedisHandle) Qpush(group, message string) (error)  {
+func (obj *FcgiRedisHandle) Qpush(group, message string) (error) {
 	if len(group) == 0 || len(message) == 0 {
 		return nil
 	}
@@ -107,8 +107,6 @@ func (obj *FcgiRedisHandle) Npush(clientUUID string, message []byte, messageType
 
 	return nil
 }
-
-
 
 func (obj *FcgiRedisHandle) Setex(clientUUID string, messageType int, message []byte) error {
 	return obj.Set(clientUUID, message, messageType)

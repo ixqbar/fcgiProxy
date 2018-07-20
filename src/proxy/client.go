@@ -234,7 +234,7 @@ var Clients = NewRequestClients()
 
 func NewClient(category int, uuid string, conn *websocket.Conn, r *http.Request, rv *url.Values) *Client {
 	return &Client{
-		category: category,
+		category:      category,
 		uuid:          uuid,
 		conn:          conn,
 		joinTime:      time.Now().Unix(),

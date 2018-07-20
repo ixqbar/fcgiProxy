@@ -129,6 +129,7 @@ func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 	rv, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
+		Logger.Print(err)
 		return
 	}
 
