@@ -54,7 +54,7 @@ func defaultHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprintf(w, "version: %s<br/>", VERSION)
-	fmt.Fprintf(w, "time: %d<br/>", time.Now().UnixNano() / 1e6)
+	fmt.Fprintf(w, "time: %d<br/>", time.Now().Unix())
 	fmt.Fprintf(w, "total: %d<br/>", Clients.num)
 }
 
