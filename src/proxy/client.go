@@ -242,7 +242,7 @@ func NewClient(category int, uuid string, conn *websocket.Conn, r *http.Request,
 		alive:         true,
 		request:       r,
 		requestValues: rv,
-		message:       make(chan *ClientMessage),
+		message:       make(chan *ClientMessage, 50),
 	}
 }
 
@@ -282,10 +282,11 @@ func (obj *RequestClients) PushMessage(uuid string, clientMessage *ClientMessage
 	return obj.Clients[uuid].PushMessage(clientMessage)
 }
 
-func (obj *RequestClients) BroadcastMessage(clientMessage *ClientMessage, clientCategory int) error {
+func (obj *RequestClients) BroadcastMessage(clientMessage *ClientMessage, clientCategory int) int {
 	obj.Lock()
 	defer obj.Unlock()
 
+	num := 0
 	for _, val := range obj.Clients {
 		if val.category != clientCategory {
 			continue
@@ -294,10 +295,15 @@ func (obj *RequestClients) BroadcastMessage(clientMessage *ClientMessage, client
 		err := val.PushMessage(clientMessage)
 		if err != nil {
 			Logger.Printf("broadcast message to %s failed %s", val.uuid, err)
+			continue
 		}
+
+		num++
 	}
 
-	return nil
+	Logger.Printf("found %d clients to broadcast message", num)
+
+	return num
 }
 
 func (obj *RequestClients) Number() int {
