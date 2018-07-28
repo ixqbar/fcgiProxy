@@ -1,10 +1,9 @@
 
-### version 0.1.2
+### version 0.1.3
 
 ### description
-```
-客户端通过websocket可直接请求php-fpm下php代码，php可通过内置redis协议服务与客户端完成通信
-```
+* 客户端通过websocket可直接请求php-fpm下php代码，php可通过内置redis协议服务与客户端完成通信
+* 推送指定信息到手机，电脑等
 
 ### usage
 ```
@@ -29,11 +28,11 @@ fcgiProxy --config=config.xml
     <!-- fastcgi -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
     <script_filename>/Users/xingqiba/workspace/php/gateway.php</script_filename>
-    <query_string><![CDATA[name=xingqiba&version=0.1.2]]></query_string>
+    <query_string><![CDATA[name=xingqiba&version=0.1.3]]></query_string>
     <header_params>
         <param>
             <key>FcgiVersion</key>
-            <value>0.1.2</value>
+            <value>0.1.3</value>
         </param>
     </header_params>
     <!-- allow websocket origins to access -->
@@ -57,6 +56,10 @@ fcgiProxy --config=config.xml
     <qpush>
         <device>{group},{name},{code}</device>
     </qpush>
+    <apush>
+        <url>https://api.pushy.me/push?api_key={YOUR KEY}</url>
+        <device>{group},{name},{token}</device>
+    </apush>
 </config>
 ```
 
@@ -126,9 +129,17 @@ CREATE TABLE `access_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 
-### qpush
+### apush [push message to android]
+* https://pushy.me/
+![](screenshot/apush_1.png)
+
+### qpush [push message to iphone]
 * http://qpush.me/zh_cn/
 ![](screenshot/qpush_1.png)
 ![](screenshot/qpush_2.png)
 
-更多疑问请+qq群 233415606
+### ctips [push message to desktop]
+* https://github.com/jonnywang/ctips
+
+### support
+ * qq group 233415606
