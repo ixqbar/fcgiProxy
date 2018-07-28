@@ -84,6 +84,7 @@ qpush {group} {message}     #qpush
 rpush {nothing} {proxy_server_content}  #推送用于qpush的代理配置
 exists {uuid}               #确认客户端uuid是否在线
 npush * {message}           #推送消息给监控 https://github.com/jonnywang/ctips
+apush * {"title":"php发送的","message":"just for test"}
 ```
 *rpush用于接收爬虫扫到的代理服务器，用于qpush推送使用
 *rpush对应爬虫可以参考 https://github.com/jonnywang/sockslistnet
