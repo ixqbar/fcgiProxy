@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	TProxyIsNone  = iota
+	TProxyIsNone = iota
 	TProxyIsSocks
 	TProxyIsHttp
 )
@@ -119,7 +119,7 @@ func (obj *TQpushDevice) String() string {
 	return fmt.Sprintf("group:%s,name:%s,code:%s,sign:%s", obj.Group, obj.Name, obj.Code, obj.Sign)
 }
 
-type FConfig struct {
+type TConfig struct {
 	AdminServerAddress  string          `xml:"admin_server"`
 	HttpServerAddress   string          `xml:"http_server"`
 	HttpServerSSLCert   string          `xml:"http_ssl_cert"`
@@ -134,11 +134,14 @@ type FConfig struct {
 	LoggerRc4EncryptKey string          `xml:"logger>rc4_encrypt_key"`
 	ProxyList           []TProxyConfig  `xml:"proxy>server"`
 	QpushDevices        []*TQpushDevice `xml:"qpush>device"`
+	ApushDevices        []*TApushDevice `xml:"apush>device"`
+	ApushUrl            string          `xml:"apush>url"`
 }
 
-var Config *FConfig
+var GConfig *TConfig
+var GApushDevices *TApushDevices
 
-func ParseXmlConfig(path string) (*FConfig, error) {
+func ParseXmlConfig(path string) (*TConfig, error) {
 	if len(path) == 0 {
 		return nil, errors.New("not found configure xml file")
 	}
@@ -154,7 +157,7 @@ func ParseXmlConfig(path string) (*FConfig, error) {
 	}
 	defer f.Close()
 
-	Config = &FConfig{}
+	GConfig = &TConfig{}
 
 	data := make([]byte, n)
 
@@ -167,12 +170,12 @@ func ParseXmlConfig(path string) (*FConfig, error) {
 		return nil, errors.New(fmt.Sprintf("expect read configure xml file size %d but result is %d", n, m))
 	}
 
-	err = xml.Unmarshal(data, &Config)
+	err = xml.Unmarshal(data, &GConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	Logger.Printf("read config %+v", Config)
+	Logger.Printf("read config %+v", GConfig)
 
-	return Config, nil
+	return GConfig, nil
 }

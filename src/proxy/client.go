@@ -37,25 +37,19 @@ type Client struct {
 	message       chan *ClientMessage
 }
 
-func NewClientTextMessage(message []byte) *ClientMessage {
-	return &ClientMessage{
-		category: websocket.TextMessage,
-		data:     message,
-	}
-}
-
-func NewClientBinaryMessage(message []byte) *ClientMessage {
-	return &ClientMessage{
-		category: websocket.BinaryMessage,
-		data:     message,
-	}
-}
-
 func NewClientMessage(category int, message []byte) *ClientMessage {
 	return &ClientMessage{
 		category: category,
 		data:     message,
 	}
+}
+
+func NewClientTextMessage(message []byte) *ClientMessage {
+	return NewClientMessage(websocket.TextMessage, message);
+}
+
+func NewClientBinaryMessage(message []byte) *ClientMessage {
+	return NewClientMessage(websocket.BinaryMessage, message);
 }
 
 func (obj *Client) PipeSendMessage() {
@@ -99,7 +93,7 @@ func (obj *Client) PipeSendMessage() {
 }
 
 func (obj *Client) PipeReadMessage() {
-	qstr := Config.QueryString
+	qstr := GConfig.QueryString
 	if len(qstr) > 0 {
 		if len(obj.request.URL.RawQuery) > 0 {
 			qstr = fmt.Sprintf("%s&%s", qstr, obj.request.URL.RawQuery)
@@ -115,12 +109,12 @@ func (obj *Client) PipeReadMessage() {
 
 	remoteInfo := strings.Split(obj.conn.RemoteAddr().String(), ":")
 
-	if len(Config.ScriptFileName) > 0 {
+	if len(GConfig.ScriptFileName) > 0 {
 		env = make(map[string]string)
-		env["SCRIPT_FILENAME"] = Config.ScriptFileName
+		env["SCRIPT_FILENAME"] = GConfig.ScriptFileName
 		env["QUERY_STRING"] = qstr
 
-		for _, item := range Config.HeaderParams {
+		for _, item := range GConfig.HeaderParams {
 			env[item.Key] = item.Value
 		}
 
@@ -162,7 +156,7 @@ func (obj *Client) PipeReadMessage() {
 
 		startTime := time.Now()
 
-		fcgi, err := fcgiclient.Dial("tcp", Config.FcgiServerAddress)
+		fcgi, err := fcgiclient.Dial("tcp", GConfig.FcgiServerAddress)
 		if err != nil {
 			Logger.Print(err)
 			break

@@ -49,7 +49,7 @@ func GetOneProxyConfigFromProxyPool() *TProxyConfig {
 	}
 
 	if len(DefaultProxyPool) == 0 {
-		for _, v := range Config.ProxyList {
+		for _, v := range GConfig.ProxyList {
 			if v.Type != TProxyIsNone {
 				AddProxyConfigToDefaultProxyPool(&v)
 			}

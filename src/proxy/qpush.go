@@ -16,7 +16,7 @@ type TQpushSignResponse struct {
 }
 
 func CheckDeviceSign(deviceIndex int) error {
-	deviceInfo := Config.QpushDevices[deviceIndex]
+	deviceInfo := GConfig.QpushDevices[deviceIndex]
 
 	url := "https://qpush.me/pusher/checkphone/"
 	qPushSignResponse := TQpushSignResponse{}
@@ -62,8 +62,8 @@ func CheckDeviceSign(deviceIndex int) error {
 		}
 
 		client.Success()
-		Config.QpushDevices[deviceIndex].Sign = qPushSignResponse.Sign
-		Config.QpushDevices[deviceIndex].Available = true
+		GConfig.QpushDevices[deviceIndex].Sign = qPushSignResponse.Sign
+		GConfig.QpushDevices[deviceIndex].Available = true
 		Logger.Printf("qpush got sign %s success for %s[%s][%s] by proxyServer %s",
 			qPushSignResponse.Sign, deviceInfo.Name, deviceInfo.Group, deviceInfo.Code,
 			client.proxyConfig.String(),
@@ -78,12 +78,12 @@ func CheckDeviceSign(deviceIndex int) error {
 }
 
 func QpushMessage(group, message string) {
-	if len(Config.QpushDevices) == 0 {
+	if len(GConfig.QpushDevices) == 0 {
 		return
 	}
 
 	url := "https://qpush.me/pusher/push_site/"
-	for deviceIndex, deviceInfo := range Config.QpushDevices {
+	for deviceIndex, deviceInfo := range GConfig.QpushDevices {
 		if deviceInfo.Group != group {
 			continue
 		}

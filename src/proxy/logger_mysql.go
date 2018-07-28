@@ -16,8 +16,8 @@ func LoggerMessageDao() *messageDao {
 	messageOnce.Do(func() {
 		var mysqlDaoInstance *mysqlDao = nil
 
-		if len(Config.LoggerMysqlConfig.Ip) > 0 && len(Config.LoggerMysqlConfig.Username) > 0 {
-			mysqlDaoInstance = NewMysqlDao("logger", Config.LoggerMysqlConfig)
+		if len(GConfig.LoggerMysqlConfig.Ip) > 0 && len(GConfig.LoggerMysqlConfig.Username) > 0 {
+			mysqlDaoInstance = NewMysqlDao("logger", GConfig.LoggerMysqlConfig)
 		}
 
 		messageMysqlDao = &messageDao{

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 	"github.com/google/uuid"
+	"encoding/json"
 )
 
 var (
@@ -21,7 +22,12 @@ type FcgiRedisHandle struct {
 }
 
 func (obj *FcgiRedisHandle) Init() error {
-	obj.Initiation(nil)
+	obj.Initiation(func() {
+		GApushDevices = NewApushDevices()
+		for _, device := range GConfig.ApushDevices {
+			GApushDevices.AddDevice(device)
+		}
+	})
 
 	return nil
 }
@@ -79,6 +85,22 @@ func (obj *FcgiRedisHandle) Qpush(group, message string) (error) {
 	}
 
 	go QpushMessage(group, message)
+
+	return nil
+}
+
+func (obj *FcgiRedisHandle) Apush(group string, message []byte) (error) {
+	if len(group) == 0 || len(message) == 0 {
+		return nil
+	}
+
+	messageData := &TApushMessageData{}
+	err := json.Unmarshal(message, messageData)
+	if err != nil {
+		return err
+	}
+
+	go GApushDevices.PushMessage(group, messageData)
 
 	return nil
 }
@@ -184,7 +206,7 @@ func Run() {
 		return
 	}
 
-	server, err := redis.NewServer(Config.AdminServerAddress, FcgiRedis)
+	server, err := redis.NewServer(GConfig.AdminServerAddress, FcgiRedis)
 	if err != nil {
 		Logger.Print(err)
 		return
@@ -211,7 +233,7 @@ func Run() {
 		redisStop <- 1
 	}()
 
-	Logger.Printf("redis protocol server run at %s", Config.AdminServerAddress)
+	Logger.Printf("redis protocol server run at %s", GConfig.AdminServerAddress)
 
 	err = server.Start()
 	if err != nil {

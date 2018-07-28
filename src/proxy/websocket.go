@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		origin := strings.ToLower(r.Header.Get("Origin"))
 		Logger.Printf("client %s Origin=%s request websocket server", r.RemoteAddr, origin)
-		if InStringArray("*", Config.Origins) || InStringArray(origin, Config.Origins) {
+		if InStringArray("*", GConfig.Origins) || InStringArray(origin, GConfig.Origins) {
 			return true
 		}
 
@@ -139,8 +139,8 @@ func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(Config.LoggerRc4EncryptKey) != 0 {
-		messagePlainText, err := Rc4Decrypt(message, []byte(Config.LoggerRc4EncryptKey))
+	if len(GConfig.LoggerRc4EncryptKey) != 0 {
+		messagePlainText, err := Rc4Decrypt(message, []byte(GConfig.LoggerRc4EncryptKey))
 		if err != nil {
 			Logger.Printf("read client %s post logs to decrypt failed %s", r.RemoteAddr, err)
 			return
@@ -156,7 +156,7 @@ func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
 
 	remoteInfo := strings.Split(r.RemoteAddr, ":")
 
-	qstr := Config.QueryString
+	qstr := GConfig.QueryString
 	if len(qstr) > 0 {
 		if len(r.URL.RawQuery) > 0 {
 			qstr = fmt.Sprintf("%s&%s", qstr, r.URL.RawQuery)
@@ -177,16 +177,16 @@ func NewWebSocket() (*http.Server, chan int) {
 	http.HandleFunc("/favicon.ico", faviconHttpHandle)
 	http.HandleFunc("/sock", sockHttpHandle)
 
-	if len(Config.LoggerMysqlConfig.Ip) > 0 && len(Config.LoggerMysqlConfig.Username) > 0 {
+	if len(GConfig.LoggerMysqlConfig.Ip) > 0 && len(GConfig.LoggerMysqlConfig.Username) > 0 {
 		http.HandleFunc("/logs", logsHttpHandle)
 	}
 
-	if len(Config.HttpStaticRoot) > 0 {
-		http.Handle("/res", http.StripPrefix("/res", http.FileServer(http.Dir(Config.HttpStaticRoot))))
+	if len(GConfig.HttpStaticRoot) > 0 {
+		http.Handle("/res", http.StripPrefix("/res", http.FileServer(http.Dir(GConfig.HttpStaticRoot))))
 	}
 
 	httpServer := &http.Server{
-		Addr:           Config.HttpServerAddress,
+		Addr:           GConfig.HttpServerAddress,
 		Handler:        http.DefaultServeMux,
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   30 * time.Second,
@@ -196,13 +196,13 @@ func NewWebSocket() (*http.Server, chan int) {
 	httpStop := make(chan int)
 
 	go func() {
-		Logger.Printf("http server will run at %s", Config.HttpServerAddress)
+		Logger.Printf("http server will run at %s", GConfig.HttpServerAddress)
 
 		LoggerMessageRecord.Run()
 
 		var err error
-		if len(Config.HttpServerSSLCert) > 0 && len(Config.HttpServerSSLKey) > 0 {
-			err = httpServer.ListenAndServeTLS(Config.HttpServerSSLCert, Config.HttpServerSSLKey)
+		if len(GConfig.HttpServerSSLCert) > 0 && len(GConfig.HttpServerSSLKey) > 0 {
+			err = httpServer.ListenAndServeTLS(GConfig.HttpServerSSLCert, GConfig.HttpServerSSLKey)
 		} else {
 			err = httpServer.ListenAndServe()
 		}
@@ -210,7 +210,7 @@ func NewWebSocket() (*http.Server, chan int) {
 		if err != nil && err != http.ErrServerClosed {
 			Logger.Print(err)
 		}
-		Logger.Printf("http server stop at %s", Config.HttpServerAddress)
+		Logger.Printf("http server stop at %s", GConfig.HttpServerAddress)
 		httpStop <- 1
 	}()
 
