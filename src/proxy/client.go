@@ -265,12 +265,16 @@ func (obj *RequestClients) RemoveClient(uuid string) {
 	delete(obj.Clients, uuid)
 }
 
-func (obj *RequestClients) PushMessage(uuid string, clientMessage *ClientMessage) error {
+func (obj *RequestClients) PushMessage(uuid string, clientMessage *ClientMessage, clientCategory int) error {
 	obj.Lock()
 	defer obj.Unlock()
 
 	if _, ok := obj.Clients[uuid]; !ok {
 		return errors.New(fmt.Sprintf("not found client %s", uuid))
+	}
+
+	if obj.Clients[uuid].category != clientCategory {
+		return nil
 	}
 
 	return obj.Clients[uuid].PushMessage(clientMessage)

@@ -1,5 +1,5 @@
 
-### version 0.1.3
+### version 0.1.4
 
 ### description
 * 客户端通过websocket可直接请求php-fpm下php代码，php可通过内置redis协议服务与客户端完成通信
@@ -28,11 +28,11 @@ fcgiProxy --config=config.xml
     <!-- fastcgi -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
     <script_filename>/Users/xingqiba/workspace/php/gateway.php</script_filename>
-    <query_string><![CDATA[name=xingqiba&version=0.1.3]]></query_string>
+    <query_string><![CDATA[name=xingqiba&version=0.1.4]]></query_string>
     <header_params>
         <param>
             <key>FcgiVersion</key>
-            <value>0.1.3</value>
+            <value>0.1.4</value>
         </param>
     </header_params>
     <!-- allow websocket origins to access -->
@@ -80,11 +80,13 @@ del *                       #剔除所有在线客户端
 del {uuid}                  #剔除指定在线客户端， uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
 subscribe {channel}         #订阅频道  系统默认频道*
 publish {channel} {message} #发布text消息到指定频道
-qpush {group} {message}     #qpush
 rpush {nothing} {proxy_server_content}  #推送用于qpush的代理配置
 exists {uuid}               #确认客户端uuid是否在线
-npush * {message}           #推送消息给监控 https://github.com/jonnywang/ctips
-apush * {"title":"php发送的","message":"just for test"}
+
+qpush * {message}                                      #qpush 推送消息给iOS
+npush * {"title":"php发送的","message":"just for test"} #推送消息给monitor https://github.com/jonnywang/ctips
+apush * {"title":"php发送的","message":"just for test"} #推送消息给android
+tpush * {"title":"php发送的","message":"just for test"} #推送消息给iOS android monitor
 ```
 *rpush用于接收爬虫扫到的代理服务器，用于qpush推送使用
 *rpush对应爬虫可以参考 https://github.com/jonnywang/sockslistnet

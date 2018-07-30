@@ -94,13 +94,40 @@ func (obj *FcgiRedisHandle) Apush(group string, message []byte) (error) {
 		return nil
 	}
 
-	messageData := &TApushMessageData{}
+	messageData := &TPushMessageData{}
 	err := json.Unmarshal(message, messageData)
 	if err != nil {
 		return err
 	}
 
 	go GApushDevices.PushMessage(group, messageData)
+
+	return nil
+}
+
+func (obj *FcgiRedisHandle) Tpush(group string, message []byte) (error) {
+	if len(group) == 0 || len(message) == 0 {
+		return nil
+	}
+
+	messageData := &TPushMessageData{}
+	err := json.Unmarshal(message, messageData)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		//iOS
+		QpushMessage(group, messageData.Message)
+		//android
+		GApushDevices.PushMessage(group, messageData)
+		//monitor
+		if group == "*" {
+			Clients.BroadcastMessage(NewClientTextMessage(message), MessageToMonitorClient)
+		} else {
+			Clients.PushMessage(group, NewClientTextMessage(message), MessageToMonitorClient)
+		}
+	}()
 
 	return nil
 }
@@ -113,18 +140,11 @@ func (obj *FcgiRedisHandle) Exists(clientUUID string) (int, error) {
 	return 0, nil
 }
 
-func (obj *FcgiRedisHandle) Npush(clientUUID string, message []byte, messageType int) error {
-	var clientMessage *ClientMessage;
-	if messageType == 0 {
-		clientMessage = NewClientTextMessage(message)
-	} else {
-		clientMessage = NewClientBinaryMessage(message)
-	}
-
+func (obj *FcgiRedisHandle) Npush(clientUUID string, message []byte) error {
 	if clientUUID == "*" {
-		Clients.BroadcastMessage(clientMessage, MessageToMonitorClient)
+		Clients.BroadcastMessage(NewClientTextMessage(message), MessageToMonitorClient)
 	} else {
-		Clients.PushMessage(clientUUID, clientMessage)
+		Clients.PushMessage(clientUUID, NewClientTextMessage(message), MessageToMonitorClient)
 	}
 
 	return nil
@@ -145,7 +165,7 @@ func (obj *FcgiRedisHandle) Set(clientUUID string, message []byte, messageType i
 	if clientUUID == "*" {
 		Clients.BroadcastMessage(clientMessage, MessageToRequestClient)
 	} else {
-		Clients.PushMessage(clientUUID, clientMessage)
+		Clients.PushMessage(clientUUID, clientMessage, MessageToRequestClient)
 	}
 
 	return nil

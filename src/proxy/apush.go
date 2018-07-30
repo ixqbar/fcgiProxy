@@ -12,18 +12,18 @@ import (
 	"bytes"
 )
 
-type TApushMessageData struct {
+type TPushMessageData struct {
 	Title string `json:"title"`
 	Message string `json:"message"`
 }
 
-func (obj TApushMessageData) String() string {
+func (obj TPushMessageData) String() string {
 	return fmt.Sprintf("title=%s,message=%s", obj.Title, obj.Message)
 }
 
 type TApushMessage struct {
 	To []string `json:"to"`
-	Data *TApushMessageData `json:"data"`
+	Data *TPushMessageData `json:"data"`
 }
 
 type TApushDevice struct {
@@ -92,7 +92,7 @@ func (obj *TApushDevices) RemoveDevice(name string) {
 	delete(obj.devices, name)
 }
 
-func (obj *TApushDevices) PushMessage(group string, message *TApushMessageData) int {
+func (obj *TApushDevices) PushMessage(group string, message *TPushMessageData) int {
 	obj.Lock()
 	defer obj.Unlock()
 
@@ -103,7 +103,7 @@ func (obj *TApushDevices) PushMessage(group string, message *TApushMessageData) 
 
 	foundDevices := make([]string, 0)
 	for _, device := range obj.devices {
-		if device.group != group {
+		if group != "*" && device.group != group {
 			continue
 		}
 
@@ -118,7 +118,7 @@ func (obj *TApushDevices) PushMessage(group string, message *TApushMessageData) 
 	return num
 }
 
-func doApushMessage(devices []string, message *TApushMessageData) {
+func doApushMessage(devices []string, message *TPushMessageData) {
 	bodyData, err := json.Marshal(TApushMessage{To:devices,Data:message})
 	if err != nil {
 		Logger.Print(err)

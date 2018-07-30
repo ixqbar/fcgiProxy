@@ -84,7 +84,7 @@ func QpushMessage(group, message string) {
 
 	url := "https://qpush.me/pusher/push_site/"
 	for deviceIndex, deviceInfo := range GConfig.QpushDevices {
-		if deviceInfo.Group != group {
+		if group != "*" && deviceInfo.Group != group {
 			continue
 		}
 
