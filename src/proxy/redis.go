@@ -23,9 +23,9 @@ type FcgiRedisHandle struct {
 
 func (obj *FcgiRedisHandle) Init() error {
 	obj.Initiation(func() {
-		GApushDevices = NewApushDevices()
+		GAndroidPushDevices = NewAndroidPushDevices()
 		for _, device := range GConfig.ApushDevices {
-			GApushDevices.AddDevice(device)
+			GAndroidPushDevices.AddDevice(device)
 		}
 	})
 
@@ -100,7 +100,7 @@ func (obj *FcgiRedisHandle) Apush(group string, message []byte) (error) {
 		return err
 	}
 
-	go GApushDevices.PushMessage(group, messageData)
+	go GAndroidPushDevices.PushMessage(group, messageData)
 
 	return nil
 }
@@ -120,7 +120,7 @@ func (obj *FcgiRedisHandle) Tpush(group string, message []byte) (error) {
 		//iOS
 		QpushMessage(group, messageData.Message)
 		//android
-		GApushDevices.PushMessage(group, messageData)
+		GAndroidPushDevices.PushMessage(group, messageData)
 		//monitor
 		if group == "*" {
 			Clients.BroadcastMessage(NewClientTextMessage(message), MessageToMonitorClient)

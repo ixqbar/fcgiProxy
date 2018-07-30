@@ -21,18 +21,18 @@ func (obj TPushMessageData) String() string {
 	return fmt.Sprintf("title=%s,message=%s", obj.Title, obj.Message)
 }
 
-type TApushMessage struct {
+type TAndroidPushMessage struct {
 	To []string `json:"to"`
 	Data *TPushMessageData `json:"data"`
 }
 
-type TApushDevice struct {
+type TAndroidPushDevice struct {
 	group string
 	name  string
 	token string
 }
 
-func (obj *TApushDevice) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (obj *TAndroidPushDevice) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var content string
 	if err := d.DecodeElement(&content, &start); err != nil {
 		return err
@@ -49,29 +49,29 @@ func (obj *TApushDevice) UnmarshalXML(d *xml.Decoder, start xml.StartElement) er
 	return errors.New(fmt.Sprintf("error qpush device %s", content))
 }
 
-func (obj *TApushDevice) String() string {
+func (obj *TAndroidPushDevice) String() string {
 	return fmt.Sprintf("group:%s,name:%s,token:%s", obj.group, obj.name, obj.token)
 }
 
-type TApushDevices struct {
+type TAndroidPushDevices struct {
 	sync.Mutex
-	devices map[string]*TApushDevice
+	devices map[string]*TAndroidPushDevice
 }
 
-func NewApushDevices() *TApushDevices {
-	return &TApushDevices{
-		devices: make(map[string]*TApushDevice, 0),
+func NewAndroidPushDevices() *TAndroidPushDevices {
+	return &TAndroidPushDevices{
+		devices: make(map[string]*TAndroidPushDevice, 0),
 	}
 }
 
-func (obj *TApushDevices) AddDevice(device *TApushDevice) {
+func (obj *TAndroidPushDevices) AddDevice(device *TAndroidPushDevice) {
 	obj.Lock()
 	defer obj.Unlock()
 
 	obj.devices[device.name] = device
 }
 
-func (obj *TApushDevices) UpdateDeviceToken(name, token string) bool {
+func (obj *TAndroidPushDevices) UpdateDeviceToken(name, token string) bool {
 	obj.Lock()
 	defer obj.Unlock()
 
@@ -85,14 +85,14 @@ func (obj *TApushDevices) UpdateDeviceToken(name, token string) bool {
 	return true
 }
 
-func (obj *TApushDevices) RemoveDevice(name string) {
+func (obj *TAndroidPushDevices) RemoveDevice(name string) {
 	obj.Lock()
 	defer obj.Unlock()
 
 	delete(obj.devices, name)
 }
 
-func (obj *TApushDevices) PushMessage(group string, message *TPushMessageData) int {
+func (obj *TAndroidPushDevices) PushMessage(group string, message *TPushMessageData) int {
 	obj.Lock()
 	defer obj.Unlock()
 
@@ -112,14 +112,14 @@ func (obj *TApushDevices) PushMessage(group string, message *TPushMessageData) i
 
 	num = len(foundDevices)
 	if num > 0 {
-		go doApushMessage(foundDevices, message)
+		go pushMessageToAndroidDevices(foundDevices, message)
 	}
 
 	return num
 }
 
-func doApushMessage(devices []string, message *TPushMessageData) {
-	bodyData, err := json.Marshal(TApushMessage{To:devices,Data:message})
+func pushMessageToAndroidDevices(devices []string, message *TPushMessageData) {
+	bodyData, err := json.Marshal(TAndroidPushMessage{To:devices,Data:message})
 	if err != nil {
 		Logger.Print(err)
 		return

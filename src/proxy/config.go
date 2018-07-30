@@ -120,26 +120,26 @@ func (obj *TQpushDevice) String() string {
 }
 
 type TConfig struct {
-	AdminServerAddress  string          `xml:"admin_server"`
-	HttpServerAddress   string          `xml:"http_server"`
-	HttpServerSSLCert   string          `xml:"http_ssl_cert"`
-	HttpServerSSLKey    string          `xml:"http_ssl_key"`
-	HttpStaticRoot      string          `xml:"http_static_root"`
-	FcgiServerAddress   string          `xml:"fcgi_server"`
-	ScriptFileName      string          `xml:"script_filename"`
-	QueryString         string          `xml:"query_string"`
-	HeaderParams        []TProxyParams  `xml:"header_params>param"`
-	Origins             OrignList       `xml:"origins"`
-	LoggerMysqlConfig   TMysqlConfig    `xml:"logger>mysql"`
-	LoggerRc4EncryptKey string          `xml:"logger>rc4_encrypt_key"`
-	ProxyList           []TProxyConfig  `xml:"proxy>server"`
-	QpushDevices        []*TQpushDevice `xml:"qpush>device"`
-	ApushDevices        []*TApushDevice `xml:"apush>device"`
-	ApushUrl            string          `xml:"apush>url"`
+	AdminServerAddress  string                `xml:"admin_server"`
+	HttpServerAddress   string                `xml:"http_server"`
+	HttpServerSSLCert   string                `xml:"http_ssl_cert"`
+	HttpServerSSLKey    string                `xml:"http_ssl_key"`
+	HttpStaticRoot      string                `xml:"http_static_root"`
+	FcgiServerAddress   string                `xml:"fcgi_server"`
+	ScriptFileName      string                `xml:"script_filename"`
+	QueryString         string                `xml:"query_string"`
+	HeaderParams        []TProxyParams        `xml:"header_params>param"`
+	Origins             OrignList             `xml:"origins"`
+	LoggerMysqlConfig   TMysqlConfig          `xml:"logger>mysql"`
+	LoggerRc4EncryptKey string                `xml:"logger>rc4_encrypt_key"`
+	ProxyList           []TProxyConfig        `xml:"proxy>server"`
+	QpushDevices        []*TQpushDevice       `xml:"qpush>device"`
+	ApushDevices        []*TAndroidPushDevice `xml:"apush>device"`
+	ApushUrl            string                `xml:"apush>url"`
 }
 
 var GConfig *TConfig
-var GApushDevices *TApushDevices
+var GAndroidPushDevices *TAndroidPushDevices
 
 func ParseXmlConfig(path string) (*TConfig, error) {
 	if len(path) == 0 {
