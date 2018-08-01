@@ -69,7 +69,7 @@ func (obj *FcgiRedisHandle) Ping(message string) (string, error) {
 	return "PONG", nil
 }
 
-func (obj *FcgiRedisHandle) Rpush(key string, content []byte) (error) {
+func (obj *FcgiRedisHandle) Rpush(key string, content []byte) error {
 	if len(key) == 0 || len(content) == 0 {
 		return ERR_PARAMS
 	}
@@ -79,7 +79,7 @@ func (obj *FcgiRedisHandle) Rpush(key string, content []byte) (error) {
 	return nil
 }
 
-func (obj *FcgiRedisHandle) Qpush(group, message string) (error) {
+func (obj *FcgiRedisHandle) Qpush(group, message string) error {
 	if len(group) == 0 || len(message) == 0 {
 		return nil
 	}
@@ -89,7 +89,17 @@ func (obj *FcgiRedisHandle) Qpush(group, message string) (error) {
 	return nil
 }
 
-func (obj *FcgiRedisHandle) Apush(group string, message []byte) (error) {
+func (obj *FcgiRedisHandle) Atoken(name, token string) error  {
+	if len(name) == 0 || len(token) == 0 {
+		return nil
+	}
+
+	go GAndroidPushDevices.UpdateDeviceToken(name, token);
+
+	return nil
+}
+
+func (obj *FcgiRedisHandle) Apush(group string, message []byte) error {
 	if len(group) == 0 || len(message) == 0 {
 		return nil
 	}
@@ -105,7 +115,7 @@ func (obj *FcgiRedisHandle) Apush(group string, message []byte) (error) {
 	return nil
 }
 
-func (obj *FcgiRedisHandle) Tpush(group string, message []byte) (error) {
+func (obj *FcgiRedisHandle) Tpush(group string, message []byte) error {
 	if len(group) == 0 || len(message) == 0 {
 		return nil
 	}

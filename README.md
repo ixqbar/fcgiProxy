@@ -87,9 +87,12 @@ qpush * {message}                                      #qpush 推送消息给iOS
 npush * {"title":"php发送的","message":"just for test"} #推送消息给monitor https://github.com/jonnywang/ctips
 apush * {"title":"php发送的","message":"just for test"} #推送消息给android
 tpush * {"title":"php发送的","message":"just for test"} #推送消息给iOS android monitor
+
+atoken {name} {token} #刷新android推送对应name的token 
 ```
 *rpush用于接收爬虫扫到的代理服务器，用于qpush推送使用
 *rpush对应爬虫可以参考 https://github.com/jonnywang/sockslistnet
+*apush的app安装apk请参考 https://github.com/jonnywang/apush
 
 ### pub&sub
 ```
