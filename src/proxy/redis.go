@@ -2,14 +2,14 @@ package proxy
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/jonnywang/go-kits/redis"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	"github.com/google/uuid"
-	"encoding/json"
 )
 
 var (
@@ -89,12 +89,12 @@ func (obj *FcgiRedisHandle) Qpush(group, message string) error {
 	return nil
 }
 
-func (obj *FcgiRedisHandle) Atoken(name, token string) error  {
+func (obj *FcgiRedisHandle) Atoken(name, token string) error {
 	if len(name) == 0 || len(token) == 0 {
 		return nil
 	}
 
-	go GAndroidPushDevices.UpdateDeviceToken(name, token);
+	go GAndroidPushDevices.UpdateDeviceToken(name, token)
 
 	return nil
 }
@@ -165,7 +165,7 @@ func (obj *FcgiRedisHandle) Setex(clientUUID string, messageType int, message []
 }
 
 func (obj *FcgiRedisHandle) Set(clientUUID string, message []byte, messageType int) error {
-	var clientMessage *ClientMessage;
+	var clientMessage *ClientMessage
 	if messageType == 0 {
 		clientMessage = NewClientTextMessage(message)
 	} else {

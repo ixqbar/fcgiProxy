@@ -1,12 +1,12 @@
 package proxy
 
 import (
-	"net/http"
-	"fmt"
-	"strings"
-	"io/ioutil"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
 )
 
 type TQpushSignResponse struct {
@@ -28,8 +28,8 @@ func CheckDeviceSign(deviceIndex int) error {
 		return err
 	}
 
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded");
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36");
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36")
 	for tryNum := 0; tryNum < MaxQpushTryNum; tryNum++ {
 		client, err := MakeHttpClient()
 		if err != nil {
@@ -102,8 +102,8 @@ func QpushMessage(group, message string) {
 			return
 		}
 
-		request.Header.Set("Content-Type", "application/x-www-form-urlencoded");
-		request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36");
+		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36")
 		for tryNum := 0; tryNum < MaxQpushTryNum; tryNum++ {
 			client, err := MakeHttpClient()
 			if err != nil {

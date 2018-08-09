@@ -1,15 +1,15 @@
 package proxy
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-	"encoding/json"
-	"io/ioutil"
 )
 
 var upgrader = websocket.Upgrader{
@@ -33,17 +33,17 @@ func faviconHttpHandle(w http.ResponseWriter, r *http.Request) {
 func defaultHttpHandle(w http.ResponseWriter, r *http.Request) {
 	for {
 		rv, err := url.ParseQuery(r.URL.RawQuery)
-		if err != nil || rv.Get("format") != "json"{
+		if err != nil || rv.Get("format") != "json" {
 			break
 		}
 
-		ret, err := json.Marshal(struct{
+		ret, err := json.Marshal(struct {
 			Version string `json:"version"`
-			Time int64 `json:"time"`
-			Total int `json:"total"`
+			Time    int64  `json:"time"`
+			Total   int    `json:"total"`
 		}{VERSION, time.Now().UnixNano() / 1e6, Clients.num})
 
-		if err != nil{
+		if err != nil {
 			break
 		}
 
@@ -119,7 +119,7 @@ func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
 	var responseContent = "fail"
 	defer func() {
 		w.Header().Set("Content-Type", "text/html")
-		w.Header().Set("Access-Control-Allow-Origin", "*");
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write([]byte(responseContent))
 	}()
 

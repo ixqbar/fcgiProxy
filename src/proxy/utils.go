@@ -2,13 +2,13 @@ package proxy
 
 import (
 	"crypto/md5"
+	"crypto/rc4"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strings"
-	"crypto/rc4"
 )
 
 func CheckFileIsDirectory(path string) (bool, error) {

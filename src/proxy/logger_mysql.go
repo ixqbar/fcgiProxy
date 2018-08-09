@@ -1,8 +1,8 @@
 package proxy
 
 import (
-	"sync"
 	_ "github.com/go-sql-driver/mysql"
+	"sync"
 )
 
 type messageDao struct {
@@ -28,7 +28,7 @@ func LoggerMessageDao() *messageDao {
 	return messageMysqlDao
 }
 
-func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) (bool) {
+func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) bool {
 	if obj.mysqlDao == nil {
 		Logger.Print("mysql logger not open")
 		return false
@@ -43,7 +43,7 @@ func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) (bool) {
 	if err != nil {
 		Logger.Print(err)
 		obj.mysqlDao.Reconnect()
-		LoggerMessageRecord.RecordMessage(pubSubMessage);
+		LoggerMessageRecord.RecordMessage(pubSubMessage)
 		return false
 	}
 	defer stmtIns.Close()
@@ -55,7 +55,7 @@ func (obj *messageDao) RecordMessage(pubSubMessage *PubSubMessage) (bool) {
 		logMessage.Resource,
 		logMessage.Type,
 		logMessage.Content,
-		pubSubMessage.Time / 1000); err != nil {
+		pubSubMessage.Time/1000); err != nil {
 		Logger.Print(err)
 		return false
 	}

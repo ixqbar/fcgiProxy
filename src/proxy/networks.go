@@ -1,19 +1,19 @@
 package proxy
 
 import (
+	"golang.org/x/net/proxy"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
-	"net"
-	"golang.org/x/net/proxy"
 )
 
 type THttpClient struct {
-	httpClient *http.Client
+	httpClient  *http.Client
 	proxyConfig *TProxyConfig
 }
 
-func (obj *THttpClient) Success()  {
+func (obj *THttpClient) Success() {
 	if obj.proxyConfig.Type == TProxyIsNone {
 		return
 	}
@@ -57,7 +57,7 @@ func MakeHttpClient() (*THttpClient, error) {
 
 		httpClient = &http.Client{
 			Transport: &http.Transport{
-				Dial:     dialer.Dial,
+				Dial:            dialer.Dial,
 				IdleConnTimeout: 10 * time.Second,
 			},
 		}

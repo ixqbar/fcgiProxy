@@ -19,7 +19,7 @@ var AvailableProxyPool = make(chan *TProxyConfig, MaxPoolSize)
 func AddProxyConfigToDefaultProxyPool(proxyConfig *TProxyConfig) {
 	if len(DefaultProxyPool) == MaxPoolSize {
 		Logger.Printf("add proxy to full default pool %v", proxyConfig.String())
-		tmpProxyConf := <- DefaultProxyPool
+		tmpProxyConf := <-DefaultProxyPool
 		Logger.Printf("discard proxy from default pool %v", tmpProxyConf.String())
 	}
 
@@ -31,7 +31,7 @@ func AddProxyConfigToDefaultProxyPool(proxyConfig *TProxyConfig) {
 func AddProxyConfigToAvailableProxyPool(proxyConfig *TProxyConfig) {
 	if len(AvailableProxyPool) == MaxPoolSize {
 		Logger.Printf("add proxy to full available pool %v", proxyConfig.String())
-		tmpProxyConf := <- AvailableProxyPool
+		tmpProxyConf := <-AvailableProxyPool
 		Logger.Printf("discard proxy from available pool %v", tmpProxyConf.String())
 	}
 

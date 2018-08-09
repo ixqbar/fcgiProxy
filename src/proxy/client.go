@@ -1,17 +1,17 @@
 package proxy
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"sync"
-	"time"
-	"net/http"
 	"github.com/tomasen/fcgi_client"
 	"io/ioutil"
-	"strings"
-	"bytes"
+	"net/http"
 	"net/url"
+	"strings"
+	"sync"
+	"time"
 )
 
 const (
@@ -45,11 +45,11 @@ func NewClientMessage(category int, message []byte) *ClientMessage {
 }
 
 func NewClientTextMessage(message []byte) *ClientMessage {
-	return NewClientMessage(websocket.TextMessage, message);
+	return NewClientMessage(websocket.TextMessage, message)
 }
 
 func NewClientBinaryMessage(message []byte) *ClientMessage {
-	return NewClientMessage(websocket.BinaryMessage, message);
+	return NewClientMessage(websocket.BinaryMessage, message)
 }
 
 func (obj *Client) PipeSendMessage() {

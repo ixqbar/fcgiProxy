@@ -1,19 +1,19 @@
 package proxy
 
 import (
+	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"sync"
-	"net/http"
-	"io/ioutil"
-	"encoding/json"
-	"bytes"
 )
 
 type TPushMessageData struct {
-	Title string `json:"title"`
+	Title   string `json:"title"`
 	Message string `json:"message"`
 }
 
@@ -22,7 +22,7 @@ func (obj TPushMessageData) String() string {
 }
 
 type TAndroidPushMessage struct {
-	To []string `json:"to"`
+	To   []string          `json:"to"`
 	Data *TPushMessageData `json:"data"`
 }
 
@@ -119,7 +119,7 @@ func (obj *TAndroidPushDevices) PushMessage(group string, message *TPushMessageD
 }
 
 func pushMessageToAndroidDevices(devices []string, message *TPushMessageData) {
-	bodyData, err := json.Marshal(TAndroidPushMessage{To:devices,Data:message})
+	bodyData, err := json.Marshal(TAndroidPushMessage{To: devices, Data: message})
 	if err != nil {
 		Logger.Print(err)
 		return

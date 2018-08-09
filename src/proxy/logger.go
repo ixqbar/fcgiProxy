@@ -5,21 +5,21 @@ import (
 )
 
 type LogMessage struct {
-	UserID int `json:"id"`
+	UserID   int    `json:"id"`
 	Resource string `json:"res"`
-	Type string `json:"type"`
-	Content string `json:"data"`
+	Type     string `json:"type"`
+	Content  string `json:"data"`
 }
 
 type LogMessageRecord struct {
 	stopSignal chan int
-	message chan *PubSubMessage
+	message    chan *PubSubMessage
 }
 
-func NewLogMessageRecord() *LogMessageRecord  {
+func NewLogMessageRecord() *LogMessageRecord {
 	return &LogMessageRecord{
-		stopSignal:make(chan int),
-		message:make(chan *PubSubMessage, 1024),
+		stopSignal: make(chan int),
+		message:    make(chan *PubSubMessage, 1024),
 	}
 }
 
@@ -29,10 +29,10 @@ func (obj *LogMessageRecord) Run() {
 
 		for {
 			select {
-			case <- obj.stopSignal:
+			case <-obj.stopSignal:
 				return
-			case pubSubMessage,ok := <- obj.message:
-				if !ok  {
+			case pubSubMessage, ok := <-obj.message:
+				if !ok {
 					continue
 				}
 

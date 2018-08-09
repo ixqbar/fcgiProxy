@@ -1,17 +1,17 @@
 package proxy
 
 import (
-	"sync"
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 )
 
 type mysqlDao struct {
 	sync.Mutex
-	name string
+	name        string
 	mysqlConfig *TMysqlConfig
-	db *sql.DB
+	db          *sql.DB
 }
 
 func NewMysqlDao(name string, mysqlConfig TMysqlConfig) *mysqlDao {
@@ -25,9 +25,9 @@ func NewMysqlDao(name string, mysqlConfig TMysqlConfig) *mysqlDao {
 	}
 
 	return &mysqlDao{
-		name:name,
-		mysqlConfig:&mysqlConfig,
-		db:db,
+		name:        name,
+		mysqlConfig: &mysqlConfig,
+		db:          db,
 	}
 }
 
@@ -63,7 +63,7 @@ func (obj *mysqlDao) Close() {
 	Logger.Printf("mysql db[%s] closed", obj.name)
 }
 
-func (obj *mysqlDao) Reconnect()  {
+func (obj *mysqlDao) Reconnect() {
 	obj.Lock()
 	defer obj.Unlock()
 
