@@ -172,10 +172,76 @@ func logsHttpHandle(w http.ResponseWriter, r *http.Request) {
 	responseContent = "ok"
 }
 
+func pushHttpHandle(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Allow", "POST")
+		w.Header().Set("Cache-Control", "max-age=3600")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		requestAllowHeaders := r.Header.Get("Access-Control-Request-Headers")
+		if len(requestAllowHeaders) > 0 {
+			w.Header().Set("Access-Control-Allow-Headers", requestAllowHeaders)
+		}
+		w.Header().Set("Access-Control-Max-Age", "3600")
+		w.WriteHeader(204)
+		return
+	}
+
+	var responseContent = "fail"
+	defer func() {
+		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Access-Control-Allow-Origin", "*");
+		w.Write([]byte(responseContent))
+	}()
+
+	if r.Method != http.MethodPost || r.ContentLength == 0 {
+		return
+	}
+
+	rv, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return
+	}
+
+	group := rv.Get("group")
+	if group == "" {
+		group = "*"
+	}
+
+	message, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		Logger.Printf("read client %s post message failed %s", r.RemoteAddr, err)
+		return
+	}
+
+	messageData := &TPushMessageData{}
+	err = json.Unmarshal(message, messageData)
+	if err != nil {
+		Logger.Printf("read client %s post message failed %s", r.RemoteAddr, err)
+		return
+	}
+
+	go func() {
+		//iOS
+		QpushMessage(group, messageData.Message)
+		//android
+		GAndroidPushDevices.PushMessage(group, messageData)
+		//monitor
+		if group == "*" {
+			Clients.BroadcastMessage(NewClientTextMessage(message), MessageToMonitorClient)
+		} else {
+			Clients.PushMessage(group, NewClientTextMessage(message), MessageToMonitorClient)
+		}
+	}()
+
+	responseContent = "ok"
+}
+
 func NewWebSocket() (*http.Server, chan int) {
 	http.HandleFunc("/", defaultHttpHandle)
 	http.HandleFunc("/favicon.ico", faviconHttpHandle)
 	http.HandleFunc("/sock", sockHttpHandle)
+	http.HandleFunc("/push", pushHttpHandle)
 
 	if len(GConfig.LoggerMysqlConfig.Ip) > 0 && len(GConfig.LoggerMysqlConfig.Username) > 0 {
 		http.HandleFunc("/logs", logsHttpHandle)

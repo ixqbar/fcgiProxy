@@ -10,11 +10,11 @@
 	<!-- fastcgi -->
 	<fcgi_server>0.0.0.0:9000</fcgi_server>
 	<script_filename>/Users/xingqiba/workspace/go/fcgiProxy/test/proxy.php</script_filename>
-	<query_string><![CDATA[name=xingqiba&version=0.1.2]]></query_string>
+	<query_string><![CDATA[name=xingqiba&version=0.1.5]]></query_string>
 	<header_params>
 		<param>
 			<key>FcgiVersion</key>
-			<value>0.1.2</value>
+			<value>0.1.5</value>
 		</param>
 	</header_params>
 	<origins>*</origins>

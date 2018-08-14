@@ -1,5 +1,5 @@
 
-### version 0.1.4
+### version 0.1.5
 
 ### description
 * 客户端通过websocket可直接请求php-fpm下php代码，php可通过内置redis协议服务与客户端完成通信
@@ -28,11 +28,11 @@ fcgiProxy --config=config.xml
     <!-- fastcgi -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
     <script_filename>/Users/xingqiba/workspace/php/gateway.php</script_filename>
-    <query_string><![CDATA[name=xingqiba&version=0.1.4]]></query_string>
+    <query_string><![CDATA[name=xingqiba&version=0.1.5]]></query_string>
     <header_params>
         <param>
             <key>FcgiVersion</key>
-            <value>0.1.4</value>
+            <value>0.1.5</value>
         </param>
     </header_params>
     <!-- allow websocket origins to access -->
@@ -109,7 +109,7 @@ $redis_handle->subscribe(array('*'), function($redis_handle, $chan, $message){
 });
 ```
 
-### http
+### http logs
 ```
 curl 'http://127.0.0.1:8899/?format=json'  #获取统计信息
 curl --data '{"id":1,"res":"hh","type":"request","data":"not found"}' 'http://127.0.0.1:8899/logs' #提交日志
@@ -117,6 +117,11 @@ curl --data '{"id":1,"res":"hh","type":"request","data":"not found"}' 'http://12
 * http://xxx.xxx.xxx.xxx:pppp/
 * http://xxx.xxx.xxx.xxx:pppp/logs
 * http://xxx.xxx.xxx.xxx:pppp/res
+
+### http push
+```
+curl -d '{"title":"ok","message":"123"}' "http://127.0.0.1:8899/push?group=*"
+```
 
 ### log table
 ```
