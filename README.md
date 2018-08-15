@@ -152,5 +152,9 @@ CREATE TABLE `access_logs` (
 ### ctips [push message to desktop]
 * https://github.com/jonnywang/ctips
 
+### whistle [chrome extension]
+![](screenshot/whistle.png)
+* https://github.com/jonnywang/whistle
+
 ### support
  * qq group 233415606
