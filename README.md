@@ -141,8 +141,8 @@ CREATE TABLE `access_logs` (
 ```
 
 ### apush [push message to android]
-* https://pushy.me/
 ![](screenshot/apush_1.png)
+* https://github.com/jonnywang/apush
 
 ### qpush [push message to iphone]
 * http://qpush.me/zh_cn/
