@@ -38,4 +38,8 @@
 	<qpush>
 		<device>*,{name},{code}</device>
 	</qpush>
+	<apush>
+		<url>https://api.pushy.me/push?api_key={YOUR KEY}</url>
+		<device>*,{name},{token}</device>
+	</apush>
 </config>
