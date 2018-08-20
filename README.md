@@ -1,5 +1,5 @@
 
-### version 0.1.5
+### version 0.1.6
 
 ### description
 * 客户端通过websocket可直接请求php-fpm下php代码，php可通过内置redis协议服务与客户端完成通信
@@ -28,11 +28,11 @@ fcgiProxy --config=config.xml
     <!-- fastcgi -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
     <script_filename>/Users/xingqiba/workspace/php/gateway.php</script_filename>
-    <query_string><![CDATA[name=xingqiba&version=0.1.5]]></query_string>
+    <query_string><![CDATA[name=xingqiba&version=0.1.6]]></query_string>
     <header_params>
         <param>
             <key>FcgiVersion</key>
-            <value>0.1.5</value>
+            <value>0.1.6</value>
         </param>
     </header_params>
     <!-- allow websocket origins to access -->
@@ -67,6 +67,7 @@ fcgiProxy --config=config.xml
 ```
 ping
 ping {message}
+uuid                        #生成一个uuid
 set {uuid} {message}        #给指定客户端推送text消息    uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
 set {uuid} {message} 1      #给指定客户端推送binary消息  uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
 setex {uuid} 0 {message}    #给指定客户端推送text消息    uuid可通过$_SERVER['PROXY_UUID'] 获取 或者连接ws参数uuid指定
