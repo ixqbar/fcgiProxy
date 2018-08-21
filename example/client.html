@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>websocket</title>
+</head>
+<body>
+    <script>
+        var ws = new WebSocket("ws://127.0.0.1:8899/sock?uuid=174171262&proxy=1");
+        ws.onopen = function (ev) {
+            ws.send("hello");
+        };
+        ws.onerror = function (ev) {
+            console.log(ev);
+            ws = null;
+        };
+        ws.onmessage = function (ev) {
+            console.log(ev.data);
+        };
+    </script>
+</body>
+</html>

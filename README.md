@@ -5,6 +5,9 @@
 * 客户端通过websocket可直接请求php-fpm下php代码，php可通过内置redis协议服务与客户端完成通信
 * 推送指定信息到手机，电脑等
 
+### tutorial
+* https://www.ixqbar.com/2018/08/21/fcgiProxyTutorial/
+
 ### usage
 ```
 fcgiProxy --config=config.xml
