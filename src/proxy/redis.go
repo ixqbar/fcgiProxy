@@ -268,6 +268,7 @@ func Run() {
 	err = server.Start()
 	if err != nil {
 		Logger.Print(err)
+		stopSignal <- syscall.SIGTERM
 	}
 
 	<-redisStop
