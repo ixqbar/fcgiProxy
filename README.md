@@ -1,5 +1,5 @@
 
-### version 0.1.6
+### version 0.1.7
 
 ### description
 * 客户端通过websocket可直接请求php-fpm下php代码，php可通过内置redis协议服务与客户端完成通信
@@ -28,14 +28,14 @@ fcgiProxy --config=config.xml
     <http_rc4_key></http_rc4_key>
     <!-- enable http static file path -->
     <http_static_root>/data/resource</http_static_root>
-    <!-- fastcgi -->
+    <!-- fastcgi 逗号分隔可以支持多个 -->
     <fcgi_server>0.0.0.0:9000</fcgi_server>
     <script_filename>/Users/xingqiba/workspace/php/gateway.php</script_filename>
-    <query_string><![CDATA[name=xingqiba&version=0.1.6]]></query_string>
+    <query_string><![CDATA[name=xingqiba&version=0.1.7]]></query_string>
     <header_params>
         <param>
             <key>FcgiVersion</key>
-            <value>0.1.6</value>
+            <value>0.1.7</value>
         </param>
     </header_params>
     <!-- allow websocket origins to access -->
@@ -93,6 +93,8 @@ apush * {"title":"php发送的","message":"just for test"} #推送消息给andro
 tpush * {"title":"php发送的","message":"just for test"} #推送消息给iOS android monitor
 
 atoken {name} {token} #刷新android推送对应name的token 
+
+addfcgiserver 192.168.1.100:9000  #增加fcgi server
 ```
 * rpush用于接收爬虫扫到的代理服务器，用于qpush推送使用
 * rpush对应爬虫可以参考 https://github.com/jonnywang/sockslistnet

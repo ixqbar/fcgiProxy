@@ -8,6 +8,7 @@ import (
 	"github.com/jonnywang/go-kits/redis"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 )
@@ -23,6 +24,7 @@ type FcgiRedisHandle struct {
 
 func (obj *FcgiRedisHandle) Init() error {
 	obj.Initiation(func() {
+		GFcgiServer.Init()
 		GAndroidPushDevices = NewAndroidPushDevices()
 		for _, device := range GConfig.ApushDevices {
 			GAndroidPushDevices.AddDevice(device)
@@ -225,6 +227,16 @@ func (obj *FcgiRedisHandle) Publish(channelName string, message []byte) (int, er
 	}
 
 	return i, nil
+}
+
+func (obj *FcgiRedisHandle) AddFcgiServer(server string) error {
+	if len(server) == 0 || strings.Index(server,":") == -1 {
+		return ERR_PARAMS
+	}
+
+	GFcgiServer.AddServer(server)
+
+	return nil
 }
 
 var FcgiRedis = &FcgiRedisHandle{}

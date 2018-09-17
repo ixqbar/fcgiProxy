@@ -156,7 +156,7 @@ func (obj *Client) PipeReadMessage() {
 
 		startTime := time.Now()
 
-		fcgi, err := fcgiclient.Dial("tcp", GConfig.FcgiServerAddress)
+		fcgi, err := fcgiclient.Dial("tcp", GFcgiServer.GetServer())
 		if err != nil {
 			Logger.Print(err)
 			break

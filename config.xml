@@ -7,14 +7,14 @@
 	<http_ssl_cert></http_ssl_cert>
 	<http_ssl_key></http_ssl_key>
 	<http_static_root>/Users/xingqiba/workspace/go/fcgiProxy</http_static_root>
-	<!-- fastcgi -->
+	<!-- fastcgi  逗号分隔可以支持多个 -->
 	<fcgi_server>0.0.0.0:9000</fcgi_server>
 	<script_filename>/Users/xingqiba/workspace/go/fcgiProxy/test/proxy.php</script_filename>
-	<query_string><![CDATA[name=xingqiba&version=0.1.6]]></query_string>
+	<query_string><![CDATA[name=xingqiba&version=0.1.7]]></query_string>
 	<header_params>
 		<param>
 			<key>FcgiVersion</key>
-			<value>0.1.6</value>
+			<value>0.1.7</value>
 		</param>
 	</header_params>
 	<origins>*</origins>
