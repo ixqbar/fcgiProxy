@@ -94,7 +94,8 @@ tpush * {"title":"php发送的","message":"just for test"} #推送消息给iOS a
 
 atoken {name} {token} #刷新android推送对应name的token 
 
-addfcgiserver 192.168.1.100:9000  #增加fcgi server
+addfcgiserver 192.168.1.100:9000     #增加fcgi server
+removefcgiserver 192.168.1.100:9000  #删除fcgi server
 ```
 * rpush用于接收爬虫扫到的代理服务器，用于qpush推送使用
 * rpush对应爬虫可以参考 https://github.com/jonnywang/sockslistnet

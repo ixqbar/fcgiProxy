@@ -239,6 +239,16 @@ func (obj *FcgiRedisHandle) AddFcgiServer(server string) error {
 	return nil
 }
 
+func (obj *FcgiRedisHandle) RemoveFcgiServer(server string) error {
+	if len(server) == 0 || strings.Index(server,":") == -1 {
+		return ERR_PARAMS
+	}
+
+	GFcgiServer.RemoveServer(server)
+
+	return nil
+}
+
 var FcgiRedis = &FcgiRedisHandle{}
 
 func Run() {

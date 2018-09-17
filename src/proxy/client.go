@@ -152,11 +152,17 @@ func (obj *Client) PipeReadMessage() {
 			continue
 		}
 
+		fcgiServer := GFcgiServer.GetServer()
+		if len(fcgiServer) == 0 {
+			Logger.Print("no available fcgiserver to post")
+			continue
+		}
+
 		body.Reset(messageContent)
 
 		startTime := time.Now()
 
-		fcgi, err := fcgiclient.Dial("tcp", GFcgiServer.GetServer())
+		fcgi, err := fcgiclient.Dial("tcp", fcgiServer)
 		if err != nil {
 			Logger.Print(err)
 			break

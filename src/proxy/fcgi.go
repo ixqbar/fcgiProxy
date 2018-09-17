@@ -28,7 +28,12 @@ func (obj *FcgiServer) GetServer() string {
 	obj.Lock()
 	defer obj.Unlock()
 
-	i := rand.Intn(len(obj.address))
+	l := len(obj.address)
+	if l == 0 {
+		return ""
+	}
+
+	i := rand.Intn(l)
 
 	Logger.Printf("select fcgi server %s to post", obj.address[i])
 
@@ -55,14 +60,15 @@ func (obj *FcgiServer) RemoveServer(server string) bool {
 	defer obj.Unlock()
 
 	l := len(obj.address)
-
-	for k, v := range obj.address {
-		if v == server {
-			if k != l-1 {
-				obj.address[k] = obj.address[l-1]
+	if l > 0 {
+		for k, v := range obj.address {
+			if v == server {
+				if k != l-1 {
+					obj.address[k] = obj.address[l-1]
+				}
+				obj.address = obj.address[:l-1]
+				return true
 			}
-			obj.address = obj.address[:l-1]
-			break
 		}
 	}
 
