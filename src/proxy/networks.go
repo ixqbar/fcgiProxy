@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"golang.org/x/net/proxy"
 	"net"
 	"net/http"
@@ -45,10 +46,7 @@ func MakeHttpClient() (*THttpClient, error) {
 			"tcp",
 			proxyConfig.Address,
 			nil,
-			&net.Dialer{
-				Timeout:   10 * time.Second,
-				KeepAlive: 10 * time.Second,
-			},
+			proxy.Direct,
 		)
 
 		if err != nil {
@@ -57,7 +55,9 @@ func MakeHttpClient() (*THttpClient, error) {
 
 		httpClient = &http.Client{
 			Transport: &http.Transport{
-				Dial:            dialer.Dial,
+				DialContext: func(_ context.Context, network, addr string) (net.Conn, error) {
+					return dialer.Dial(network, addr)
+				},
 				IdleConnTimeout: 10 * time.Second,
 			},
 		}
